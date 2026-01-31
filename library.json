@@ -1,0 +1,11 @@
+{
+  "name": "shared",
+  "version": "0.1.0",
+  "authors": [
+    { "name": "Timur Cravtov" }
+  ],
+  "sentence": "Reusable helpers for Arduino/PlatformIO projects",
+  "paragraph": "Common utilities (LED helpers, serial helpers, sensors) shared across lab projects.",
+  "frameworks": ["arduino"],
+  "platforms": ["atmelavr", "espressif32"]
+}

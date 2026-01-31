@@ -1,0 +1,21 @@
+# Ignore all files in this directory
+*.tex
+*.aux
+*.log
+*.out
+*.toc
+*.pdf
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.nav
+*.snm
+*.vrb
+*.bbl
+*.blg
+*.lof
+*.lot
+
+*images/
+*hidden/
+*code/

@@ -8,6 +8,7 @@ Laboratory work for the Embedded Systems / IoT course.
 ├── src/
 │   ├── labs/          # Lab implementations
 │   └── shared/        # Shared utilities and components
+│   └── simulation/    # Sim1 files for SimulIDE programs
 └── reports/           # Lab reports and documentation
 ```
 
