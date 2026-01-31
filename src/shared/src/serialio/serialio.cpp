@@ -1,21 +1,18 @@
 #include <Arduino.h>
-#include <tcio/tcio.h>
+#include <serialio/serialio.h>
 #include <stdio.h>
 
 #include <stdlib.h>
 
 // add a char to serial output
 int serial_putchar(char c, FILE* stream) {
-  if (c == '\n') Serial.write('\r');
   Serial.write(c);
   return 0;
 }
 
 // get a char from serial input
 int serial_getchar(FILE* stream) {
-  while (Serial.available() == 0) {
-    delay(1);
-  }
+  while (!Serial.available() == 0);
   return Serial.read();
 }
 
@@ -40,9 +37,10 @@ void redirectSerialToStdio() {
   // setup the UART streams for input and output
   fdev_setup_stream(&uartout, serial_putchar, NULL, _FDEV_SETUP_WRITE);
   fdev_setup_stream(&uartin, NULL, serial_getchar, _FDEV_SETUP_READ);
-
+  
   // redirect standard input and output to the UART
   stdout = &uartout;
   stdin = &uartin;
+  stderr = &uartout;
 }
 

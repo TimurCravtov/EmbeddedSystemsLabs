@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <led/led.h> 
-#include <tcio/tcio.h>
+#include <serialio/serialio.h>
 
 const uint8_t ledPinNum = 13;
 
@@ -16,12 +16,18 @@ void setup() {
   redirectSerialToStdio();
 }
 
+bool equals(const char* a, const char* b) {
+  return strcmp(a, b) == 0;
+}
 
 void loop() {
 
   char buffer[100] = {0};
   fflush(stdout);
   
+
+  printf("Waiting for command (led on / led off): \n");
+
   readLine(buffer, sizeof(buffer));
 
   if (equals(buffer, "led on")) {
@@ -34,8 +40,8 @@ void loop() {
       printf("Turning LED ON\n");
       led.on();
     }
-
   }
+
   else if (equals(buffer, "led off")) {
 
     // printf("Intered command to turn LED OFF\n");
@@ -49,8 +55,4 @@ void loop() {
   } else {
     printf("Unknown command. Use 'led on' or 'led off'.\n");
   }
-}
-
-bool equals(char* a, char* b) {
-  return strcmp(a, b) == 0;
 }

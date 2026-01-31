@@ -4,10 +4,20 @@
 <mainCompProps MainCompId="mega2560-63" Frequency="16 MHz" Program="../src/labs/lab1/.pio/build/megaatmega2560/firmware.hex" Auto_Load="true" saveEepr="true" MainMcu="true" SerialMon="-1" />
 </item>
 
-<item itemtype="SerialTerm" CircId="SerialTerm-4" mainComp="false" Show_id="false" Show_Val="false" Pos="-300,12" rotation="0" hflip="-1" vflip="1" label="SerialTerm-4" idLabPos="-20,-32" labelrot="0" valLabPos="-16,20" valLabRot="0" Baudrate="9600 _Bd" DataBits="8 _bits" StopBits="1 _bits" SerialMon="true" />
+<item itemtype="Resistor" CircId="Resistor-5" mainComp="false" ShowProp="Resistance" Show_id="false" Show_Val="true" Pos="-304,92" rotation="0" hflip="1" vflip="1" label="Resistor-5" idLabPos="-16,-24" labelrot="0" valLabPos="-16,6" valLabRot="0" Resistance="100 Ω" />
 
-<item itemtype="Connector" uid="Connector-1" startpinid="SerialTerm-4-pin0" endpinid="Mega-1-0" pointList="-276,4,-204,4,-204,-4" />
+<item itemtype="Led" CircId="Led-6" mainComp="false" Show_id="false" Show_Val="false" Pos="-248,80" rotation="0" hflip="-1" vflip="1" label="Led-6" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Color="Yellow" Grounded="false" Threshold="2.4 V" MaxCurrent="30 mA" Resistance="0.6 Ω" />
 
-<item itemtype="Connector" uid="Connector-2" startpinid="SerialTerm-4-pin1" endpinid="Mega-1-1" pointList="-276,20,-204,20,-204,4" />
+<item itemtype="SerialTerm" CircId="SerialTerm-4" mainComp="false" Show_id="false" Show_Val="false" Pos="-316,0" rotation="0" hflip="-1" vflip="1" label="SerialTerm-4" idLabPos="-20,-32" labelrot="0" valLabPos="-16,20" valLabRot="0" Baudrate="9600 _Bd" DataBits="8 _bits" StopBits="1 _bits" SerialMon="false" />
+
+<item itemtype="Connector" uid="Connector-3" startpinid="Led-6-lPin" endpinid="Mega-1-13" pointList="-232,80,-204,80,-204,108" />
+
+<item itemtype="Connector" uid="Connector-2" startpinid="SerialTerm-4-pin1" endpinid="Mega-1-1" pointList="-292,8,-204,8,-204,4" />
+
+<item itemtype="Connector" uid="Connector-1" startpinid="SerialTerm-4-pin0" endpinid="Mega-1-0" pointList="-292,-8,-204,-8,-204,-4" />
+
+<item itemtype="Connector" uid="Connector-6" startpinid="Resistor-5-rPin" endpinid="Led-6-rPin" pointList="-288,92,-264,92,-264,80" />
+
+<item itemtype="Connector" uid="Connector-7" startpinid="Resistor-5-lPin" endpinid="Mega-1-GND0" pointList="-320,92,-332,92,-332,116,-204,116" />
 
 </circuit>
