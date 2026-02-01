@@ -12,11 +12,11 @@ int serial_putchar(char c, FILE* stream) {
 
 // get a char from serial input
 int serial_getchar(FILE* stream) {
-  while (!Serial.available() == 0);
+  while (!Serial.available());
   return Serial.read();
 }
 
-// reads a line from stdin into buffer, up to maxLen-1 characters
+// reads a line from stdin into buffer, up to maxLen-1 characters, and discards the rest of the line if too long
 void readLine(char* buffer, size_t maxLen) {
   size_t i = 0;
   while (i < maxLen - 1) {
@@ -26,7 +26,17 @@ void readLine(char* buffer, size_t maxLen) {
     }
     buffer[i++] = (char)c;
   }
+
   buffer[i] = '\0';
+
+  // should i clear the rest of the line if it was too long?
+  // i guess so
+  if (i == maxLen - 1) {
+    int c;
+    do {
+      c = fgetc(stdin);
+    } while (c != '\n' && c != '\r' && c != EOF);
+  }
 }
 
 // Helper functions for redirecting Serial to stdio
