@@ -2,7 +2,6 @@
 
 #include <Arduino.h>
 
-/// @brief A simple LED control class
 class Led {
 public:
   explicit Led(uint8_t pin);

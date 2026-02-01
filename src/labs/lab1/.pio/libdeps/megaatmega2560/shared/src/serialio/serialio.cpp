@@ -41,6 +41,6 @@ void redirectSerialToStdio() {
   // redirect standard input and output to the UART
   stdout = &uartout;
   stdin = &uartin;
-  stderr = &uartout; // never used this, but why not. output errors to serial as well
+  stderr = &uartout;
 }
 
