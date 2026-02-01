@@ -168,3 +168,6 @@ MSVC.cache
 /x86/
 [Dd]ebug/
 [Rr]elease/
+
+
+*libdeps/
