@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <led/led.h> 
 #include <serialio/serialio.h>
+#include <string.h>
 
 
 // setup LED on pin 13
@@ -21,7 +22,7 @@ void setup() {
 }
 
 bool equals(const char* a, const char* b) {
-  return strcmp(a, b) == 0;
+  return strcasecmp(a, b) == 0;
 }
 
 void loop() {
