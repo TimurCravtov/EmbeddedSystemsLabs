@@ -1,6 +1,8 @@
 #include <LedController.h>
 #include <string.h>
 
+void handleLed(Led& led, bool);
+
 void processCommand(Led& led, char* command) {
     if (strcasecmp(command, "led on") == 0) {
         handleLed(led, true);

@@ -7,7 +7,7 @@
 #include <string.h>
 #include <LedController.h>
 
-const uint8_t ledPinNum = 13;
+const uint8_t ledPinNum = 3 ;
 
 Led led(ledPinNum);
 
@@ -15,7 +15,7 @@ void setup() {
 
   // start serial communication
   Serial.begin(9600);
-  delay(100);
+  delay(1000);
   
   redirectSerialToStdio();
 
