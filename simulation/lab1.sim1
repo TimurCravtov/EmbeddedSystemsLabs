@@ -1,23 +1,23 @@
 <circuit version="1.1.0-SR1" rev="2005" stepSize="1000000" stepsPS="1000000" NLsteps="100000" reaStep="1000000" animate="0" >
 
-<item itemtype="Subcircuit" CircId="Mega-1" mainComp="false" Show_id="true" Show_Val="false" Pos="-212,-124" rotation="0" hflip="1" vflip="1" label="Mega-1" idLabPos="0,-20" labelrot="0" valLabPos="-16,20" valLabRot="0" Logic_Symbol="false">
-<mainCompProps MainCompId="mega2560-63" Frequency="16 MHz" Program="../src/labs/lab1/.pio/build/megaatmega2560/firmware.hex" Auto_Load="true" saveEepr="true" MainMcu="true" SerialMon="-1" />
-</item>
-
 <item itemtype="Resistor" CircId="Resistor-5" mainComp="false" ShowProp="Resistance" Show_id="false" Show_Val="true" Pos="-304,92" rotation="0" hflip="1" vflip="1" label="Resistor-5" idLabPos="-16,-24" labelrot="0" valLabPos="-16,6" valLabRot="0" Resistance="100 Ω" />
 
 <item itemtype="Led" CircId="Led-6" mainComp="false" Show_id="false" Show_Val="false" Pos="-248,80" rotation="0" hflip="-1" vflip="1" label="Led-6" idLabPos="-16,-24" labelrot="0" valLabPos="-16,20" valLabRot="0" Color="Yellow" Grounded="false" Threshold="2.4 V" MaxCurrent="30 mA" Resistance="0.6 Ω" />
 
 <item itemtype="SerialTerm" CircId="SerialTerm-4" mainComp="false" Show_id="false" Show_Val="false" Pos="-316,0" rotation="0" hflip="-1" vflip="1" label="SerialTerm-4" idLabPos="-20,-32" labelrot="0" valLabPos="-16,20" valLabRot="0" Baudrate="9600 _Bd" DataBits="8 _bits" StopBits="1 _bits" SerialMon="false" />
 
-<item itemtype="Connector" uid="Connector-3" startpinid="Led-6-lPin" endpinid="Mega-1-13" pointList="-232,80,-204,80,-204,108" />
-
-<item itemtype="Connector" uid="Connector-2" startpinid="SerialTerm-4-pin1" endpinid="Mega-1-1" pointList="-292,8,-204,8,-204,4" />
-
-<item itemtype="Connector" uid="Connector-1" startpinid="SerialTerm-4-pin0" endpinid="Mega-1-0" pointList="-292,-8,-204,-8,-204,-4" />
+<item itemtype="Subcircuit" CircId="Nano-7" mainComp="false" Show_id="true" Show_Val="false" Pos="-216,-36" rotation="0" hflip="1" vflip="1" label="Nano-7" idLabPos="0,-20" labelrot="0" valLabPos="-16,20" valLabRot="0">
+<mainCompProps MainCompId="m328 TQFP-269" Frequency="16 MHz" Program="../src/labs/lab1/.pio/build/nanoatmega328/firmware.hex" Auto_Load="false" saveEepr="true" MainMcu="false" SerialMon="-1" />
+</item>
 
 <item itemtype="Connector" uid="Connector-6" startpinid="Resistor-5-rPin" endpinid="Led-6-rPin" pointList="-288,92,-264,92,-264,80" />
 
-<item itemtype="Connector" uid="Connector-7" startpinid="Resistor-5-lPin" endpinid="Mega-1-GND0" pointList="-320,92,-332,92,-332,116,-204,116" />
+<item itemtype="Connector" uid="Connector-8" startpinid="Led-6-lPin" endpinid="Nano-7-13" pointList="-232,80,-232,120,-136,120,-136,92,-160,92" />
+
+<item itemtype="Connector" uid="Connector-9" startpinid="SerialTerm-4-pin0" endpinid="Nano-7-0" pointList="-292,-8,-208,-8,-208,-12" />
+
+<item itemtype="Connector" uid="Connector-10" startpinid="SerialTerm-4-pin1" endpinid="Nano-7-1" pointList="-292,8,-248,8,-248,-20,-208,-20" />
+
+<item itemtype="Connector" uid="Connector-11" startpinid="Resistor-5-lPin" endpinid="Nano-7-GND1" pointList="-320,92,-320,48,-392,48,-392,-72,-136,-72,-136,-12,-160,-12" />
 
 </circuit>

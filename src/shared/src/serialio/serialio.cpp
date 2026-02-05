@@ -17,7 +17,7 @@ int serial_getchar(FILE* stream) {
 }
 
 // reads a line from stdin into buffer, up to maxLen-1 characters, and discards the rest of the line if too long
-void readLine(char* buffer, size_t maxLen) {
+void readLine(char* buffer, size_t maxLen, bool discardRestOfLine = true) {
   size_t i = 0;
   while (i < maxLen - 1) {
     int c = fgetc(stdin);
@@ -29,9 +29,8 @@ void readLine(char* buffer, size_t maxLen) {
 
   buffer[i] = '\0';
 
-  // should i clear the rest of the line if it was too long?
-  // i guess so
-  if (i == maxLen - 1) {
+  // discard the rest of the line if requested
+  if (i == maxLen - 1 && discardRestOfLine) {
     int c;
     do {
       c = fgetc(stdin);
