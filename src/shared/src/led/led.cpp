@@ -1,6 +1,8 @@
 #include <led/led.h>
 
-Led::Led(uint8_t pin) : pin_(pin) {
+Led::Led(uint8_t pin) : pin_(pin) {}
+
+void Led::init() {
   pinMode(pin_, OUTPUT);
 }
 

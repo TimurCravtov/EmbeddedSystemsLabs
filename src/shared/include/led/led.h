@@ -9,6 +9,7 @@ public:
 
   void on();
   boolean isOn();
+  void init();
   void off();
   void toggle();
 

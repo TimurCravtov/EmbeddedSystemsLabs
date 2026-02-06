@@ -49,21 +49,26 @@ void readLine(char* buffer, size_t maxLen) {
   }
 
   // If we stopped on CR, consume an optional LF to avoid empty reads.
-  // if (c == '\r') {
-  //   int next = fgetc(stdin);
-  //   if (next != '\n' && next != EOF) {
-  //     ungetc(next, stdin);
-  //   }
-  // }
+  if (c == '\r') {
+    int next = fgetc(stdin);
+    if (next != '\n' && next != EOF) {
+      ungetc(next, stdin);
+    }
+  }
 }
 
+// Helper functions for redirecting Serial to stdio
 void redirectSerialToStdio() {
-  static FILE uartio;
+  static FILE uartout;
+  static FILE uartin;
 
-  fdev_setup_stream(&uartio, serial_putchar, serial_getchar,
-                    _FDEV_SETUP_READ | _FDEV_SETUP_WRITE);
-
-  stdin = &uartio;
-  stdout = &uartio;
-  stderr = &uartio;
+  // setup the UART streams for input and output
+  fdev_setup_stream(&uartout, serial_putchar, NULL, _FDEV_SETUP_WRITE);
+  fdev_setup_stream(&uartin, NULL, serial_getchar, _FDEV_SETUP_READ);
+  
+  // redirect standard input and output to the UART
+  stdout = &uartout;
+  stdin = &uartin;
+  stderr = &uartout; // never used this, but why not. output errors to serial as well
 }
+

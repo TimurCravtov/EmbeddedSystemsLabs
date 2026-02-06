@@ -7,12 +7,12 @@
 #include <string.h>
 #include <LedController.h>
 
-const uint8_t ledPinNum = 3 ;
-
+const uint8_t ledPinNum = A4;
 Led led(ledPinNum);
 
 void setup() {
 
+  led.init();
   // start serial communication
   Serial.begin(9600);
   delay(1000);
@@ -27,7 +27,7 @@ void loop() {
     char buffer[10] = {0};
       
     // promt to read data
-    printf("Waiting for command (led on / led off): \n");
+    printf("Waiting for command (led on / led off): \n> ");
     readLine(buffer, sizeof(buffer));
 
     // process command introduced by user
