@@ -7,7 +7,7 @@
 #include <string.h>
 #include <LedController.h>
 
-constexpr uint8_t ledPinNum = A4;
+constexpr uint8_t ledPinNum = 13;
 Led led(ledPinNum);
 
 void setup() {
@@ -28,7 +28,13 @@ void loop() {
       
     // promt to read data
     printf_P(PSTR("Waiting for command (led on / led off): \n> "));
-    readLine(buffer, sizeof(buffer));
+
+    // read the line
+    scanf(" %[^\n\r]", buffer);
+    int c;
+
+    // clear the buffer
+    while ((c = getchar()) != '\n' && c != '\r' && c != EOF);
 
     // process command introduced by user
     processCommand(led, buffer);

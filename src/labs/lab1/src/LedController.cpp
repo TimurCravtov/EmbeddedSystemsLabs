@@ -4,6 +4,9 @@
 void handleLed(Led& led, bool);
 
 void processCommand(Led& led, char* command) {
+
+    printf_P(PSTR("Received command: %s\n"), command);
+
     if (strcasecmp_P(command, PSTR("led on")) == 0) {
         handleLed(led, true);
     } else if (strcasecmp_P(command, PSTR("led off")) == 0) {
