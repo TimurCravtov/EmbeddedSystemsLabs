@@ -2,7 +2,5 @@
 
 #include <Arduino.h>
 
-/// @brief Functions for serial input/output redirection and line reading
-void readLine(char* buffer, size_t maxLen);
 void redirectSerialToStdio();
 
