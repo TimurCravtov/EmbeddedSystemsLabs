@@ -6,13 +6,13 @@
 
 
 // add a char to serial output
-int serial_putchar(char c, FILE* stream) {
+int serialPutchar(char c, FILE* stream) {
   Serial.write(c);
   return 0;
 }
 
 // get a char from serial input
-int serial_getchar(FILE* stream) {
+int serialGetchar(FILE* stream) {
   while (!Serial.available());
   return Serial.read();
 }
@@ -21,8 +21,8 @@ int serial_getchar(FILE* stream) {
 void redirectSerialToStdio() {
   static FILE uartinout;
 
-  fdev_setup_stream(&uartinout, serial_putchar, serial_getchar, _FDEV_SETUP_RW);
+  fdev_setup_stream(&uartinout, serialPutchar, serialGetchar, _FDEV_SETUP_RW);
   
-  stdout = stdin = stderr= &uartinout;
+  stdout = stdin = stderr = &uartinout;
 }
 
