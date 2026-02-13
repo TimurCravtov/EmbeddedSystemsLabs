@@ -11,7 +11,8 @@
 constexpr byte ROWS = 4; 
 constexpr byte COLS = 4; 
 
-const char keys[ROWS][COLS] PROGMEM = {
+// Keymap must be in RAM: Keypad library reads it with keymap[i], not pgm_read_byte()
+const char keys[ROWS][COLS] = {
   {'1','2','3','A'},
   {'4','5','6','B'},
   {'7','8','9','C'},

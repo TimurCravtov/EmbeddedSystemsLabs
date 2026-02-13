@@ -13,3 +13,4 @@ void handleThisSupremeSecuredSystem(Led& red, Led& green, uint8_t maxPasswordLen
 byte* readPassword(uint8_t maxPasswordLength);
 
 bool isConfiguredPasswordValid(uint8_t maxPasswordLength);
+static void clearline();
