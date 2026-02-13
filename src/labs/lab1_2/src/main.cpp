@@ -1,43 +1,66 @@
 #include <Arduino.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <lcd/LcdStdioManager.h>
+#include <keypad/KeypadStdioManager.h>
+#include <Keypad.h>
+#include <led/led.h>
+#include "PinCodeSystem.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <led/led.h> 
-#include <serialio/serialio.h>
-#include <string.h>
-#include <LedController.h>
+// ketpadd stuff
+constexpr byte ROWS = 4; 
+constexpr byte COLS = 4; 
 
-// set led pin number and led object
-constexpr uint8_t ledPinNum = 13;
-Led led(ledPinNum);
+const char keys[ROWS][COLS] PROGMEM = {
+  {'1','2','3','A'},
+  {'4','5','6','B'},
+  {'7','8','9','C'},
+  {'*','0','#','D'}
+};
+
+constexpr byte rowPins[ROWS] = {9, 8, 7, 6}; 
+constexpr byte colPins[COLS] = {5, 4, 3, 2};
+
+Keypad keypad = Keypad(makeKeymap(keys), const_cast<byte*>(rowPins), const_cast<byte*>(colPins), ROWS, COLS);
+
+
+// lcd
+constexpr uint8_t LCD_ADDRESS = 0x27;
+constexpr uint8_t LCD_COLS = 16;
+constexpr uint8_t LCD_ROWS = 2;
+
+LiquidCrystal_I2C lcd(LCD_ADDRESS, LCD_COLS, LCD_ROWS);
+
+// leds
+constexpr uint8_t redLedPin = 12;
+Led redLed(redLedPin);
+
+constexpr uint8_t greenLedPin = 13;
+Led greenLed(greenLedPin);
+
+// PASSWORD FOR ACTIVATING THE SYSTEM (must be numeric and not exceed maxPasswordLength)
+constexpr uint8_t maxPasswordLength = 10;
+const char PASSWORD[] PROGMEM = "123653";
 
 void setup() {
-
-  led.init();
-  // start serial communication
-  Serial.begin(9600);
-  delay(1000);
-  
-  redirectSerialToStdio();
+    lcd.init();
+    
+    if (!isConfiguredPasswordValid(maxPasswordLength)) {
+        printf_P(PSTR("Invalid password\n"));
+        while (true) {
+        delay(1000);
+        }
+    }
+    lcd.backlight();
+    redLed.init(); 
+    greenLed.init();
+    LcdStdioManager::setup(&lcd);
+    KeypadStdioManager::setup(&keypad);
 }
 
 void loop() {
 
-    // reading command from serial
-    char buffer[10] = {0};
-      
-    // prompt to read data
-    printf_P(PSTR("Waiting for command (led on / led off): \n> "));
-
-    // read the line
-    // TODO: handle backspace operator
-    scanf(" %9[^\n\r]", buffer);
-    int c;
-
-    // clear the buffer
-    while ((c = getchar()) != '\n' && c != '\r' && c != EOF);
-
-    // process command introduced by user
-    processCommand(led, buffer);
-  
+    handleThisSupremeSecuredSystem(redLed, greenLed, maxPasswordLength);
 }
+
+ 
