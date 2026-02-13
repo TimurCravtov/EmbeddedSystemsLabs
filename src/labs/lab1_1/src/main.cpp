@@ -8,7 +8,7 @@
 #include <LedController.h>
 
 // set led pin number and led object
-constexpr uint8_t ledPinNum = 3;
+constexpr uint8_t ledPinNum = 13;
 Led led(ledPinNum);
 
 void setup() {
