@@ -15,6 +15,7 @@
 *.blg
 *.lof
 *.lot
+*(busy)
 
 *images/
 *hidden/
