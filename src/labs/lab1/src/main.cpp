@@ -8,7 +8,7 @@
 #include <LedController.h>
 
 // set led pin number and led object
-constexpr uint8_t ledPinNum = 13;
+constexpr uint8_t ledPinNum = 3;
 Led led(ledPinNum);
 
 void setup() {
@@ -24,13 +24,14 @@ void setup() {
 void loop() {
 
     // reading command from serial
-    char buffer[8] = {0};
+    char buffer[10] = {0};
       
     // prompt to read data
     printf_P(PSTR("Waiting for command (led on / led off): \n> "));
 
     // read the line
-    scanf(" %7[^\n\r]", buffer);
+    // TODO: handle backspace operator
+    scanf(" %9[^\n\r]", buffer);
     int c;
 
     // clear the buffer
