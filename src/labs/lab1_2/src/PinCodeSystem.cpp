@@ -24,6 +24,7 @@ void handleThisSupremeSecuredSystem(Led& red, Led& green, uint8_t maxPasswordLen
         clearline();
         printf_P(PSTR("Yappy <3"));
         delay(2000);
+        green.off();
         clearline();
     } else {
 
@@ -33,6 +34,7 @@ void handleThisSupremeSecuredSystem(Led& red, Led& green, uint8_t maxPasswordLen
         clearline();
         printf_P(PSTR("Nope >:("));
         delay(2000);
+        red.off();
         clearline();
     }
 }
@@ -53,7 +55,7 @@ bool isConfiguredPasswordValid(uint8_t maxPasswordLength) {
 }
 
 // prints 16 spsaces from the beginning of the line and returns the cursor
-static void clearline() {
+void clearline() {
     putchar('\r');
     // default to a 16-column LCD (matches project's LCD_COLS)
     for (uint8_t i = 0; i < 16; ++i) {
@@ -62,11 +64,10 @@ static void clearline() {
     putchar('\r');
 }
 
-
-
 // reads password until '#' or is the length succeds maxPassword length
 byte* readPassword(uint8_t maxPasswordLength) {
     static byte input[INTERNAL_BUFFER_SIZE + 1];
+    memset(input, 0, sizeof(input)); // clear the buffer
 
     if (maxPasswordLength > INTERNAL_BUFFER_SIZE) {
         maxPasswordLength = INTERNAL_BUFFER_SIZE;

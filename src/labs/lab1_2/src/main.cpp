@@ -6,6 +6,7 @@
 #include <Keypad.h>
 #include <led/led.h>
 #include "PinCodeSystem.h"
+// #include <serialio/serialio.h>
 
 // ketpadd stuff
 constexpr byte ROWS = 4; 
@@ -52,11 +53,16 @@ void setup() {
         delay(1000);
         }
     }
+    // Serial.begin(9600);
+
     lcd.backlight();
     redLed.init(); 
+
+    // redirectErrorToSerial();
     greenLed.init();
     LcdStdioManager::setup(&lcd);
     KeypadStdioManager::setup(&keypad);
+    // fprintf_P(stderr, PSTR("System initialized\n\rTest"));
 }
 
 void loop() {

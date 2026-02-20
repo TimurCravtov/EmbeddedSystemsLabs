@@ -26,3 +26,11 @@ void redirectSerialToStdio() {
   stdout = stdin = stderr = &uartinout;
 }
 
+
+void redirectErrorToSerial() {
+  static FILE uartout;
+
+  fdev_setup_stream(&uartout, serialPutchar, NULL, _FDEV_SETUP_WRITE);
+  
+  stderr = &uartout;
+}

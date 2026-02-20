@@ -32,6 +32,20 @@
       "top": 159.6,
       "left": -409,
       "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 119.15,
+      "left": -470.4,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 32.75,
+      "left": -470.4,
+      "attrs": { "value": "220" }
     }
   ],
   "connections": [
@@ -46,12 +60,20 @@
     [ "keypad1:C2", "nano:4", "green", [ "v0" ] ],
     [ "keypad1:C3", "nano:3", "green", [ "v0" ] ],
     [ "keypad1:C4", "nano:2", "green", [ "v0" ] ],
-    [ "nano:12", "led1:A", "green", [ "v0" ] ],
     [ "nano:GND.1", "bb1:bn.1", "black", [ "v0" ] ],
     [ "lcd1:GND", "bb1:bn.4", "black", [ "h0" ] ],
     [ "led1:C", "bb1:bn.6", "green", [ "v144", "h279.6" ] ],
-    [ "led2:A", "nano:13", "green", [ "h9.6", "v-86.4" ] ],
-    [ "led2:C", "bb1:bn.10", "green", [ "v124.8", "h230.8", "v-172.8", "h96.8" ] ]
+    [ "led2:C", "bb1:bn.10", "green", [ "v124.8", "h230.8", "v-172.8", "h96.8" ] ],
+    [ "nano:13", "r1:2", "green", [ "v0" ] ],
+    [ "r1:1", "led2:A", "green", [ "v0" ] ],
+    [ "nano:12", "r2:2", "green", [ "v0" ] ],
+    [ "r2:1", "led1:A", "green", [ "v0" ] ]
   ],
-  "dependencies": {}
+  "dependencies": {},
+
+  "serialMonitor": {
+  "display": "always",
+  "newline": "lf",
+  "convertEol": true
+  }
 }
