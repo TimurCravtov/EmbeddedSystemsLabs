@@ -1,0 +1,7 @@
+{
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.arguments": [
+        "--header-insertion=never",
+        "--query-driver=C:/Users/timur/.platformio/packages/toolchain-atmelavr/bin/avr-g*"
+    ]
+}

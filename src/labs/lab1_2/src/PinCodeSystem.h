@@ -2,7 +2,6 @@
 
 #include <led/led.h>
 #include <stdint.h>
-#include <stdbool.h>
 #include <avr/pgmspace.h>
 
 // Password stored in program memory (defined in main.cpp)

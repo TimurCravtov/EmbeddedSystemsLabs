@@ -1,0 +1,18 @@
+{
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.arguments": [
+        "--header-insertion=never",
+        "--query-driver=C:/Users/timur/.platformio/packages/toolchain-atmelavr/bin/avr-g*",
+        "--background-index",
+        "--completion-style=detailed",
+        "--all-scopes-completion",
+        "--clang-tidy",
+        "--log=verbose"
+    ],
+    "files.associations": {
+        "*.json": "jsonc",
+        "**/*.json": "jsonc"
+    },
+    "clangd.checkUpdates": true,
+    "clangd.detectExtensionConflicts": true
+}

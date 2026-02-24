@@ -1,0 +1,6 @@
+CompileFlags:
+  Add: [--target=avr]
+  # Optional: help clangd find the compiler if query-driver fails
+  # CompilerPath: C:/Users/timur/.platformio/packages/toolchain-atmelavr/bin/avr-gcc.exe
+  # Remove some flags that might annoy clangd
+  Remove: [-fno-fat-lto-objects, -mrelax]
