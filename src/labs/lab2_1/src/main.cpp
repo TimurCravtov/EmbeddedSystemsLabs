@@ -8,6 +8,7 @@
 #include "ReadingTask.h"
 #include "StatisticsTask.h"
 #include "Scheduler.h"
+#include <serialio/serialio.h>
 
 // leds
 constexpr uint8_t redLedPin = 2;
@@ -33,9 +34,9 @@ namespace ReadingTask { uint16_t offset = 3; }
 namespace StatisticsTask { uint16_t offset = 2; } 
 namespace DisplayTask { uint16_t offset = 1; } 
 
-void Scheduler::setup() {
-    Scheduler::addTask(ReadingTask::run, ReadingTask::recurrenceDelay, ReadingTask::offset);
+void setupScheduler() {
     Scheduler::addTask(StatisticsTask::run, StatisticsTask::recurrenceDelay, StatisticsTask::offset);
+    Scheduler::addTask(ReadingTask::run, ReadingTask::recurrenceDelay, ReadingTask::offset);
     Scheduler::addTask(DisplayTask::run, DisplayTask::recurrenceDelay, DisplayTask::offset);
 }
 
@@ -43,8 +44,14 @@ void setup() {
     redLed.init();
     greenLed.init();
     yellowLed.init();
+
     button.init();
-    Scheduler::setup();
+
+    setupScheduler();
+
+    Serial.begin(9600);
+    redirectSerialToStdio(true, true, true);
+
 }
 
 void loop() {
