@@ -9,7 +9,7 @@ namespace Statistics {
     extern uint16_t longPressesNumber;
     extern unsigned long longPressesTotalDuration;
 
-    extern uint16_t lastHandledUpdateTime;
+    extern unsigned long lastHandledUpdateTime;
 }
 
 namespace StatisticsTask {

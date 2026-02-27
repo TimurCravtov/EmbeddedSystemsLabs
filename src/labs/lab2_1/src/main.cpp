@@ -52,13 +52,12 @@ void setup() {
   redLed.init();
   greenLed.init();
   yellowLed.init();
-
   button.init();
   Timer::init();
 
   setupScheduler();
 
-  Serial.begin(1000000);
+  Serial.begin(9600);
   redirectSerialToStdio(true, true, true);
 }
 

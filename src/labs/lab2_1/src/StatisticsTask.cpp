@@ -12,7 +12,7 @@ unsigned long shortPressesTotalDuration = 0;
 uint16_t longPressesNumber = 0;
 unsigned long longPressesTotalDuration = 0;
 
-uint16_t lastHandledUpdateTime = -1;
+unsigned long lastHandledUpdateTime = -1;
 } // namespace Statistics
 
 void StatisticsTask::run() {
