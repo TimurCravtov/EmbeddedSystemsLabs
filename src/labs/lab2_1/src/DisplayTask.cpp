@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "DisplayTask.h"
 #include "StatisticsTask.h"
+#include <stdlib.h>
+#include <Arduino.h>
 
 void DisplayTask::run() {
     uint32_t totalCount = Statistics::shortPressesNumber + Statistics::longPressesNumber;
@@ -18,14 +20,14 @@ void DisplayTask::run() {
         uint32_t decimals = fractionalSeconds / 10;
         
         // Use %lu (unsigned long) to ensure compatibility across all architectures
-        printf("L: %u, S: %u, Avg: %lu.%02lus\n", 
+        printf_P(PSTR("L: %u, S: %u, Avg: %lu.%02lus\n"), 
                Statistics::longPressesNumber, 
                Statistics::shortPressesNumber, 
                (unsigned long)wholeSeconds, 
                (unsigned long)decimals);
     } else {
         // Fallback for before any buttons are pressed
-        printf("L: %u, S: %u, Avg: 0.00s\n", 
+        printf_P(PSTR("L: %u, S: %u, Avg: 0.00s\n"), 
                Statistics::longPressesNumber, 
                Statistics::shortPressesNumber);
     }
