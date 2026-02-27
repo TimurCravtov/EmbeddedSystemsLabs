@@ -3,6 +3,5 @@
 #include <Arduino.h>
 
 // this function does exactly what do you think it does
-void redirectSerialToStdio();
-
+void redirectSerialToStdio(bool in = true, bool out = true, bool err = true);
 void redirectErrorToSerial();

@@ -18,19 +18,12 @@ int serialGetchar(FILE* stream) {
 }
 
 // Helper functions for redirecting Serial to stdio
-void redirectSerialToStdio() {
+void redirectSerialToStdio(bool in = true, bool out = true, bool err = true) {
   static FILE uartinout;
 
   fdev_setup_stream(&uartinout, serialPutchar, serialGetchar, _FDEV_SETUP_RW);
-  
-  stdout = stdin = stderr = &uartinout;
-}
 
-
-void redirectErrorToSerial() {
-  static FILE uartout;
-
-  fdev_setup_stream(&uartout, serialPutchar, NULL, _FDEV_SETUP_WRITE);
-  
-  stderr = &uartout;
+  if (out) stdout = &uartinout;
+  if (in) stdin = &uartinout;
+  if (err) stderr = &uartinout;
 }

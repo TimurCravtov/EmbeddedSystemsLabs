@@ -7,5 +7,4 @@ struct TaskConfig {
   void (*taskFunction)();
   uint16_t recurrenceDelay;
   uint16_t offset;
-  uint8_t runMe;
 };

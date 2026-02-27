@@ -2,10 +2,8 @@
 
 #include <stdint.h>
 
-namespace ReadingTask {
+namespace DisplayTask {
     void run();
     extern uint16_t recurrenceDelay;
     extern uint16_t offset;
-    extern unsigned long lastUpdatedTime; 
-    extern unsigned long lastDuration;
 }

@@ -17,9 +17,6 @@ namespace Scheduler {
     /// @brief This will be called in the main loop to execute the tasks based on their timing. It checks each task's recurrence control and executes the task function when the control reaches zero, then resets the control to the task's recurrence delay.
     void loop();
     
-    /// @brief This function is called on each system tick (e.g., from a timer interrupt) to update the scheduler's internal timing and determine when tasks should be executed. It decrements the recurrence control for each task and triggers task execution when the control reaches zero.
-    void update();
-
     /// @brief Registers a task with the given configuration. This function is used internally to set up the task's function pointer, recurrence delay, offset, and initial recurrence control based on the offset.
     /// @param config A pointer to the TaskConfig structure that will be filled with the task's configuration.
     /// @param taskFunction A pointer to the function that implements the task's behavior.

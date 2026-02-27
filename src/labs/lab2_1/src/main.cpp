@@ -1,14 +1,16 @@
-#include "Key.h"
 #include <Arduino.h>
+#include <stdio.h>
+
 #include <button/button.h>
 #include <led/led.h>
-#include <stdio.h>
+#include <serialio/serialio.h>
 
 #include "DisplayTask.h"
 #include "ReadingTask.h"
-#include "StatisticsTask.h"
 #include "Scheduler.h"
-#include <serialio/serialio.h>
+#include "StatisticsTask.h"
+#include "Timer.h"
+
 
 // leds
 constexpr uint8_t redLedPin = 2;
@@ -26,34 +28,40 @@ Button button(buttonPin);
 
 // task config
 namespace ReadingTask { uint16_t recurrenceDelay = 2; }
-namespace StatisticsTask { uint16_t recurrenceDelay = 2; } 
-namespace DisplayTask { uint16_t recurrenceDelay = 2; } 
+namespace StatisticsTask { uint16_t recurrenceDelay = 2; }
+namespace DisplayTask { uint16_t recurrenceDelay = 10000; }
 
 // offsets
-namespace ReadingTask { uint16_t offset = 3; } 
-namespace StatisticsTask { uint16_t offset = 2; } 
-namespace DisplayTask { uint16_t offset = 1; } 
+namespace ReadingTask { uint16_t offset = 3; }
+namespace StatisticsTask { uint16_t offset = 2; }
+namespace DisplayTask { uint16_t offset = 10000; }
 
+// add tasks
 void setupScheduler() {
-    Scheduler::addTask(StatisticsTask::run, StatisticsTask::recurrenceDelay, StatisticsTask::offset);
-    Scheduler::addTask(ReadingTask::run, ReadingTask::recurrenceDelay, ReadingTask::offset);
-    Scheduler::addTask(DisplayTask::run, DisplayTask::recurrenceDelay, DisplayTask::offset);
+  Scheduler::addTask(StatisticsTask::run, StatisticsTask::recurrenceDelay,
+                     StatisticsTask::offset);
+  Scheduler::addTask(ReadingTask::run, ReadingTask::recurrenceDelay,
+                     ReadingTask::offset);
+  Scheduler::addTask(DisplayTask::run, DisplayTask::recurrenceDelay,
+                     DisplayTask::offset);
+  Scheduler::addTask(StatisticsLedTask::run, StatisticsLedTask::recurrenceDelay,
+                     StatisticsLedTask::offset);
 }
 
 void setup() {
-    redLed.init();
-    greenLed.init();
-    yellowLed.init();
+  redLed.init();
+  greenLed.init();
+  yellowLed.init();
 
-    button.init();
+  button.init();
+  Timer::init();
 
-    setupScheduler();
+  setupScheduler();
 
-    Serial.begin(9600);
-    redirectSerialToStdio(true, true, true);
-
+  Serial.begin(1000000);
+  redirectSerialToStdio(true, true, true);
 }
 
-void loop() {
-    Scheduler::loop();
+void loop() { 
+    Scheduler::loop(); 
 }
