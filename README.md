@@ -9,7 +9,7 @@ Laboratory work for the Embedded Systems / IoT course.
 │   ├── labs/          # Lab implementations
 │   └── shared/        # Shared utilities and components
 └── reports/           # Lab reports and documentation
-└── simulation/        # SimulIDE simulations of circuits
+└── simulation/        # Wokwi simulations of circuits
 ```
 
 ## Reports
