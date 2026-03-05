@@ -1,0 +1,61 @@
+#include <Arduino_FreeRTOS.h>
+#include <semphr.h>
+#include <task.h>
+#include <stdio.h>
+#include "DisplayTask.h"
+#include "StatisticsTask.h"
+#include <stdlib.h>
+#include <Arduino.h>
+
+void DisplayTask::run(void* parameters) {
+
+    TickType_t lastWakeTime = xTaskGetTickCount();
+    const TickType_t interval = pdMS_TO_TICKS(10 * 1000); // 10 seconds
+
+    while (true) {
+
+        vTaskDelay(interval);
+
+        uint32_t totalCount = Statistics::shortPressesNumber + Statistics::longPressesNumber;
+        uint32_t totalDuration = Statistics::shortPressesTotalDuration + Statistics::longPressesTotalDuration;
+        
+        extern SemaphoreHandle_t statsMutex;
+        xSemaphoreGive(statsMutex); 
+
+        uint16_t currentShort = Statistics::shortPressesNumber;
+        uint16_t currentLong = Statistics::longPressesNumber;
+        uint32_t currentTotalPressedTime = Statistics::shortPressesTotalDuration + Statistics::longPressesTotalDuration;
+
+
+        Statistics::shortPressesNumber = Statistics::longPressesNumber = 0;
+        Statistics::shortPressesTotalDuration = Statistics::longPressesTotalDuration = 0;
+
+        xSemaphoreGive(statsMutex);
+
+        if (totalCount > 0) {
+
+            uint32_t avgMs = totalDuration / totalCount;
+            
+            uint32_t wholeSeconds = avgMs / 1000;
+            uint32_t fractionalSeconds = avgMs % 1000;
+            
+            uint32_t decimals = fractionalSeconds / 10;
+            
+            printf_P(PSTR("L: %u, S: %u, Avg: %lu.%02lus\n"), 
+                currentLong, 
+                currentShort, 
+                (unsigned long)wholeSeconds, 
+                (unsigned long)decimals);
+        } else {
+
+            // fallback
+            printf_P(PSTR("L: %u, S: %u, Avg: 0.00s\n"), 
+                currentLong, 
+                currentShort);
+        }
+
+    }
+
+}
+
+
