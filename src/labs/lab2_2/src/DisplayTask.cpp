@@ -36,13 +36,13 @@ void DisplayTask::run(void* parameters) {
             uint32_t fractionalSeconds = avgMs % 1000;
             uint32_t decimals = fractionalSeconds / 10;
 
-            printf_P(PSTR("L: %u, S: %u, Avg: %lu.%02lus\n"),
+            printf_P(PSTR("L: %u, S: %u, Avg: %lu.%02lus\n\r"),
                 currentLong,
                 currentShort,
                 (unsigned long)wholeSeconds,
                 (unsigned long)decimals);
         } else {
-            printf_P(PSTR("L: %u, S: %u, Avg: 0.00s\n"),
+            printf_P(PSTR("L: %u, S: %u, Avg: 0.00s\n\r"),
                 currentLong,
                 currentShort);
         }
