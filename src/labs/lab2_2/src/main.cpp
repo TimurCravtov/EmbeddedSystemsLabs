@@ -26,9 +26,13 @@ Led yellowLed(yellowPin);
 Button button(buttonPin);
 
 
+// magic numbers
+extern const uint16_t PRESS_DURATION_THRESHOLD_MS = 500;
+extern const uint8_t SHORT_BLINK_NUMBER = 5;
+extern const uint8_t LONG_BLINK_NUMBER = 10;
+
 // shared variables
 extern SemaphoreHandle_t pressSemaphore;
-
 
 void setup() {
 
@@ -50,5 +54,5 @@ void setup() {
     vTaskStartScheduler();
 }
 
-void loop() {
-}
+void loop() { }
+

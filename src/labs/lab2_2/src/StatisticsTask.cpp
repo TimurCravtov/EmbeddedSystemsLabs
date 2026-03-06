@@ -14,6 +14,9 @@ namespace Statistics {
 
 extern SemaphoreHandle_t pressSemaphore;
 extern Led yellowLed;
+extern const uint16_t PRESS_DURATION_THRESHOLD_MS;
+extern const uint8_t SHORT_BLINK_NUMBER;
+extern const uint8_t LONG_BLINK_NUMBER;
 
 void StatisticsTask::run(void* parameters) {
 
@@ -24,7 +27,7 @@ void StatisticsTask::run(void* parameters) {
 
             xSemaphoreTake(Statistics::statsMutex, portMAX_DELAY);
 
-            if (duration < 500) {
+            if (duration < PRESS_DURATION_THRESHOLD_MS) {
                 Statistics::shortPressesNumber++;
                 Statistics::shortPressesTotalDuration += duration;
             } else {
@@ -34,7 +37,7 @@ void StatisticsTask::run(void* parameters) {
 
             xSemaphoreGive(Statistics::statsMutex);
 
-            int blinkCount = (duration >= 500) ? 10 : 5;
+            int blinkCount = (duration >= PRESS_DURATION_THRESHOLD_MS) ? LONG_BLINK_NUMBER : SHORT_BLINK_NUMBER;
             for (int i = 0; i < blinkCount; i++) {
                 yellowLed.on();
                 vTaskDelay(pdMS_TO_TICKS(100));

@@ -19,6 +19,8 @@ extern Button button;
 extern Led redLed;
 extern Led greenLed;
 
+extern const uint16_t PRESS_DURATION_THRESHOLD_MS;
+
 void ReadingTask::run(void* parameters) {
 
     uint32_t startTime = 0;
@@ -49,7 +51,7 @@ void ReadingTask::run(void* parameters) {
 
 void visualizeButtonPressDuration() {
 
-    if (ReadingTask::lastDuration < 500) {
+    if (ReadingTask::lastDuration < PRESS_DURATION_THRESHOLD_MS) {
         greenLed.on();
         redLed.off();
     } else {
