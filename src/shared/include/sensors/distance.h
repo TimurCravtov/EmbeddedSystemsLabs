@@ -3,13 +3,26 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-class DistanceSensor {
+
+template <typename Derived>
+class Sensor {
+public:
+    void init() {
+        static_cast<Derived*>(this)->_init();
+    }
+
+    float readRaw() {
+        return static_cast<Derived*>(this)->_readRaw();
+    }
+};
+
+class DistanceSensor: public Sensor<DistanceSensor> {
 public:
     DistanceSensor(uint8_t triggerPin, uint8_t echoPin);
-    virtual ~DistanceSensor() = default;
-    virtual float getDistance() const = 0;
-    void init() const;
+    float _readRaw();
+    void _init();
 private:
     uint8_t triggerPin;
     uint8_t echoPin;
 };
+

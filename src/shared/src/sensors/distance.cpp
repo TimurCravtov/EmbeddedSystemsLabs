@@ -2,12 +2,14 @@
 
 DistanceSensor::DistanceSensor(uint8_t triggerPin, uint8_t echoPin) : triggerPin(triggerPin), echoPin(echoPin) { }
 
-void DistanceSensor::init() const {
+void DistanceSensor::_init() {
     pinMode(this->triggerPin, OUTPUT);
     pinMode(this->echoPin, INPUT);
 }
 
-float DistanceSensor::getDistance() const {
+
+
+float DistanceSensor::_readRaw() {
     digitalWrite(this->triggerPin, LOW);
     delayMicroseconds(2);
     digitalWrite(this->triggerPin, HIGH);
