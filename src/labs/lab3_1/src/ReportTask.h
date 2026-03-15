@@ -12,8 +12,7 @@ struct ReportTaskParams {
     void (*onAlertUpdate)(bool anyAlert);
 };
 
-const char* alertStateStr(AlertState s);
-ConsoleColor alertStateColor(AlertState s);
+
 
 namespace ReportTask {
     void run(void* parameters);

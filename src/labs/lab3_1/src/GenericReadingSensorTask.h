@@ -42,10 +42,11 @@ private:
     SensorType& sensor;
     SensorConfig config;
     SensorData data;
+    float (*converter)(float);
 
 public:
-    GenericReadingSensorTask(SensorType& sensor, const SensorConfig& cfg)
-        : sensor(sensor), config(cfg)
+    GenericReadingSensorTask(SensorType& sensor, const SensorConfig& cfg, float (*conv)(float) = nullptr)
+        : sensor(sensor), config(cfg), converter(conv)
     {
         data.rawValue            = 0;
         data.thresholdHigh       = cfg.thresholdCenter + cfg.hysteresis;
@@ -67,7 +68,11 @@ public:
 
     void _run(void* parameters) {
         while (true) {
-            data.rawValue = sensor.readRaw();
+            float val = sensor.readRaw();
+            if (converter != nullptr) {
+                val = converter(val);
+            }
+            data.rawValue = val;
             vTaskDelay(pdMS_TO_TICKS(config.readingIntervalMs));
         }
     }
