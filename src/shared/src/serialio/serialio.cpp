@@ -10,7 +10,7 @@
 // add a char to serial output
 int serialPutchar(char c, FILE* stream) {
   if (c == '\n') {
-    Serial.write('\r');
+    Serial.write('\n\r');
   }
   Serial.write(c);
   return 0;

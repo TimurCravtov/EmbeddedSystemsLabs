@@ -21,6 +21,7 @@ public:
     DistanceSensor(uint8_t triggerPin, uint8_t echoPin);
     float _readRaw();
     void _init();
+
 private:
     uint8_t triggerPin;
     uint8_t echoPin;
