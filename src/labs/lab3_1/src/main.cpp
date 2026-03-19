@@ -1,170 +1,203 @@
-#include <Arduino_FreeRTOS.h>
-#include <semphr.h>
 #include <Arduino.h>
+#include <Arduino_FreeRTOS.h>
 #include <stdio.h>
-#include <avr/pgmspace.h>
-
-#include <led/led.h>
 #include <serialio/serialio.h>
-#include <sensors/distance.h>
-#include <sensors/temperature.h>
-#include <LiquidCrystal_I2C.h>
-#include <lcd/LcdStdioManager.h>
+#include <math.h>
 
-#include "GenericReadingSensorTask.h"
-#include "ThresholdTask.h"
-#include "ReportTask.h"
+#include <semphr.h>
 
-// --- Sensor configuration ---
-const SensorConfig distanceConfig = {
-    50,     // readingIntervalMs  (20-100 ms)
-    100,    // thresholdIntervalMs
-    25.0,   // thresholdCenter    (cm)
-    2.0,    // hysteresis         (+- cm)
-    3,      // debounceRequired
-    "DIST"  // name
+// --- Interface & Types ---
+class ISensor {
+public:
+    virtual ~ISensor() {}
+    virtual float read() = 0; 
 };
 
-const SensorConfig tempConfig = {
-    100,    // readingIntervalMs
-    200,    // thresholdIntervalMs
-    25.0,   // thresholdCenter    (Celsius)
-    2.0,    // hysteresis         (+- Celsius)
-    3,      // debounceRequired
-    "TEMP"  // name
-};
+typedef float (*Transformation)(float);
+float defaultTransform(float x) { return x; }
 
-float convertNtcAdcToCelsius(float adcValue) {
-    if (adcValue <= 0 || adcValue >= 1023) return 0;
-    
-    // Instead of doing the full heavy log() math every 100ms which blows up the tiny 60-word stack,
-    // we use a fast approximation lookup table for common indoor/outdoor temps (0C to 40C)
-    // or simply rely on a single log() call if we absolutely must, but we can drastically reduce footprint
-    // by doing it differently, or simply increasing AcqTemp stack.
-    // Let's first try just boosting AcqTemp stack temporarily to 80 to fit the log() without 
-    // sacrificing precision, while keeping Report at 160.
-    
-    const float BETA = 3950.0f;
-    return 1.0f / (log(1.0f / (1023.0f / adcValue - 1.0f)) / BETA + 1.0f / 298.15f) - 273.15f;
-}
+// --- Analog Sensor Implementation ---
+class GenericAnalogSensor : public ISensor {
+private:
+    int pin;
+    Transformation transform;
 
-const uint16_t REPORT_RECURRENCE_MS = 500;
-
-// --- Hardware pins ---
-const uint8_t TRIGGER_PIN   = 9;
-const uint8_t ECHO_PIN      = 10;
-const uint8_t TEMP_PIN      = A0;
-const uint8_t RED_LED_PIN   = 12;
-const uint8_t GREEN_LED_PIN = 13;
-
-// --- Objects ---
-Led redLed(RED_LED_PIN);
-Led greenLed(GREEN_LED_PIN);
-LiquidCrystal_I2C lcd(0x27, 16, 2);
-
-DistanceSensor distanceSensor(TRIGGER_PIN, ECHO_PIN);
-GenericReadingSensorTask<DistanceSensor> distanceTask(distanceSensor, distanceConfig);
-
-TemperatureSensor temperatureSensor(TEMP_PIN);
-GenericReadingSensorTask<TemperatureSensor> tempTask(temperatureSensor, tempConfig, convertNtcAdcToCelsius);
-
-SensorData* sensorList[] = { distanceTask.getDataPtr(), tempTask.getDataPtr() };
-const uint8_t SENSOR_COUNT = sizeof(sensorList) / sizeof(sensorList[0]);
-
-ThresholdTask distanceThresholdTask(distanceTask.getDataPtr());
-ThresholdTask tempThresholdTask(tempTask.getDataPtr());
-
-// --- Task 3: Report params ---
-void onAlertUpdate(bool anyAlert) {
-    if (anyAlert) {
-        redLed.on();
-        greenLed.off();
-    } else {
-        redLed.off();
-        greenLed.on();
+public:
+    GenericAnalogSensor(int p, Transformation t = defaultTransform) 
+        : pin(p), transform(t) { 
+        pinMode(pin, INPUT); 
     }
-}
-
-ReportTaskParams reportParams = {
-    sensorList,
-    SENSOR_COUNT,
-    REPORT_RECURRENCE_MS,
-    onAlertUpdate
+    
+    float read() override {
+        int raw = analogRead(pin);
+        float normalized = raw / 1023.0f; 
+        return transform(normalized);
+    }
 };
 
+// --- Digital Sensor Implementation (HC-SR04) ---
+class SonicDistanceSensor : public ISensor {
+private:
+    int trigPin;
+    int echoPin;
+
+public:
+    SonicDistanceSensor(int trig, int echo) : trigPin(trig), echoPin(echo) {
+        pinMode(trigPin, OUTPUT);
+        pinMode(echoPin, INPUT);
+    }
+
+    float read() override {
+
+        digitalWrite(trigPin, LOW);
+        delayMicroseconds(2);
+
+        digitalWrite(trigPin, HIGH);
+        delayMicroseconds(10);
+        digitalWrite(trigPin, LOW);
+
+        long duration = pulseIn(echoPin, HIGH, 30000);
+
+        if (duration == 0) return -1.0f;
+
+        return (duration * 0.0343f) / 2.0f; 
+    }
+};
+
+class SensorAquisitionTask {
+private:
+    const char* taskName;
+    ISensor* sensor;
+    uint32_t delayMs;
+    float lastValue = 0.0f;
+    QueueHandle_t outQueue = NULL;
+public:
+
+    SensorAquisitionTask(const char* name, ISensor* s, uint32_t delay, QueueHandle_t q = NULL) 
+        : taskName(name), sensor(s), delayMs(delay), outQueue(q) {}
+    
+    void run() {
+        while (true) {
+            float value = sensor->read();
+            lastValue = value;
+            printf("%s: %d.%02d\n", taskName, (int)value, (int)(abs(value) * 100) % 100);
+            if (outQueue != NULL) {
+                xQueueSend(outQueue, &value, 0);
+            }
+            vTaskDelay(pdMS_TO_TICKS(delayMs)); 
+        }
+    }
+    float* getLastValuePtr() { return &lastValue; }
+};
+
+class ThreshHoldTask {
+
+    private:
+        QueueHandle_t inQueue;
+        float minThreshold;
+        float maxThreshold;
+        uint32_t delay; // not used anymore but keep for compatibility
+        uint8_t debounceDelay;
+        void (*alertCallback)();
+
+    public:
+
+        ThreshHoldTask(QueueHandle_t q, float minT, float maxT, uint32_t d, uint8_t debounceD, void (*callback)())
+            : inQueue(q), minThreshold(minT), maxThreshold(maxT), delay(d), debounceDelay(debounceD), alertCallback(callback) {}
+
+        void run() {
+            uint8_t consecutiveBad = 0;
+            bool alerted = false;
+            while (true) {
+                float value = 0.0f;
+                if (xQueueReceive(inQueue, &value, portMAX_DELAY) == pdTRUE) {
+                    if (value < minThreshold || value > maxThreshold) {
+                        consecutiveBad++;
+                        if (consecutiveBad >= debounceDelay && !alerted) {
+                            alertCallback();
+                            alerted = true;
+                        }
+                    } else {
+                        consecutiveBad = 0;
+                        alerted = false;
+                    }
+                }
+            }
+        }
+};
+
+struct ReportData {
+    uint8_t status; // -1 low, 0 normal, 1 high
+    char* sensorName;
+    float value;
+    SemaphoreHandle_t xSemaphore; // read write semaphore
+};
+
+class ReportTask {
+public:
+    ReportTask(ReportData* data, uint8_t numberOfSensors, uint32_t delay) : reportData(data), numberOfSensors(numberOfSensors), delay(delay) {}
+
+    void run() {
+        while (true) {
+            for (uint8_t i = 0; i < this->numberOfSensors; i++) {
+                xSemaphoreTake(reportData[i].xSemaphore, portMAX_DELAY);
+                printf("%s :: %s :: %s\n", reportData[i].sensorName, 
+                    reportData[i].status == 0 ? "OK" : (reportData[i].status < 0 ? "LOW" : "HIGH"), 
+                    String(reportData[i].value).c_str());
+                xSemaphoreGive(reportData[i].xSemaphore);
+            }
+            vTaskDelay(pdMS_TO_TICKS(this->delay));
+        }
+    }
+private:
+    ReportData* reportData;
+    uint8_t numberOfSensors;
+    uint32_t delay;
+};
+
+// --- Conversion Logic ---
+float thermistorToCelsius(float normalized) {
+    if (normalized <= 0.001f || normalized >= 0.999f) return 0.0f;
+    const float B = 3950.0f;          
+    const float R0 = 10000.0f;        
+    const float T0 = 298.15f;         
+    float resistance = 10000.0f * (normalized / (1.0f - normalized));
+    float tempK = 1.0f / ((1.0f / T0) + (1.0f / B) * log(resistance / R0));
+    return tempK - 273.15f; 
+}
+
+
+
+// --- Main Setup ---
 void setup() {
     Serial.begin(9600);
-    redirectSerialToStdio(true, true, true);
+    redirectSerialToStdio();
 
-    lcd.init();
-    lcd.backlight();
-    // LcdStdioManager::setup(&lcd); // KEEP COMMENTED OUT to isolate bug
-    // redirectSerialToStdio(); // ALREADY COMMENTED OUT
-    redirectSerialToStdio(true, true, true);
+    ISensor* temp = new GenericAnalogSensor(A0, thermistorToCelsius);
+    ISensor* distance = new SonicDistanceSensor(3, 2); 
 
-    printf_P(PSTR("[Setup] Init...\n"));
+    // 2. Create RTOS Tasks
+    auto* tempTask = new SensorAquisitionTask("Temp (C)", temp, 1000);
+    xTaskCreate([](void* p) {
+        static_cast<SensorAquisitionTask*>(p)->run();
+    }, "TempTask", 128, tempTask, 1, NULL);
 
-    redLed.init();
-    greenLed.init();
-    greenLed.on();
-    distanceSensor.init();
-    temperatureSensor.init();
+    // Create queue for distance samples (10-sample buffer)
+    QueueHandle_t distQueue = xQueueCreate(10, sizeof(float));
 
-    distanceTask.init();
-    tempTask.init();
+    auto* distTask = new SensorAquisitionTask("Dist (cm)", distance, 500, distQueue);
+    xTaskCreate([](void* p) {
+        static_cast<SensorAquisitionTask*>(p)->run();
+    }, "DistTask", 128, distTask, 1, NULL);
 
-
-
-    BaseType_t r1 = xTaskCreate(
-        GenericReadingSensorTask<DistanceSensor>::taskEntryPoint,
-        "Acquire",
-        60,
-        &distanceTask,
-        3,
-        NULL
-    );
-
-    BaseType_t r2 = xTaskCreate(
-        ThresholdTask::taskEntryPoint,
-        "ThreshD",
-        55,
-        &distanceThresholdTask,
-        2,
-        NULL
-    );
-
-    BaseType_t r3 = xTaskCreate(
-        GenericReadingSensorTask<TemperatureSensor>::taskEntryPoint,
-        "AcqTemp",
-        80, // INCREASED slightly for the heavy log() floating point math
-        &tempTask,
-        3,
-        NULL
-    );
-
-    BaseType_t r4 = xTaskCreate(
-        ThresholdTask::taskEntryPoint,
-        "ThreshT",
-        55,
-        &tempThresholdTask,
-        2,
-        NULL
-    );
-
-    BaseType_t r5 = xTaskCreate(
-        ReportTask::run,
-        "Report",
-        160, // DECREASED to 160 to balance the 20 words given to AcqTemp
-        &reportParams,
-        1,
-        NULL
-    );
-
-    printf_P(PSTR("Tasks: %d %d %d %d %d\n"), r1, r2, r3, r4, r5);
+    // Create threshold task that consumes from the distance queue (5-sample debounce)
+    xTaskCreate([](void* p) {
+        static_cast<ThreshHoldTask*>(p)->run();
+    }, "AlertTask", 128, new ThreshHoldTask(distQueue, 15.0f, 25.0f, 100, 3, []() {
+        printf("ALERT: Distance out of range!\n");
+    }), 1, NULL);
 
     vTaskStartScheduler();
-    printf_P(PSTR("Sched returned!\n"));
 }
 
-void loop() { }
-
+void loop() {}
