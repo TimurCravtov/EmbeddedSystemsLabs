@@ -16,7 +16,7 @@ float DistanceSensor::_readRaw() {
     delayMicroseconds(10);
     digitalWrite(this->triggerPin, LOW);
 
-    long duration = pulseIn(this->echoPin, HIGH);
+    long duration = pulseIn(this->echoPin, HIGH, 30000);
     float distance = duration * 0.034 / 2; // Speed of sound is 343 m/s, which is 0.034 cm/us
     return distance;
 }

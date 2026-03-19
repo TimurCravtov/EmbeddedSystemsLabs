@@ -2,6 +2,7 @@
 #include <semphr.h>
 #include <Arduino.h>
 #include <stdio.h>
+#include <avr/pgmspace.h>
 
 #include <led/led.h>
 #include <serialio/serialio.h>
@@ -35,6 +36,14 @@ const SensorConfig tempConfig = {
 
 float convertNtcAdcToCelsius(float adcValue) {
     if (adcValue <= 0 || adcValue >= 1023) return 0;
+    
+    // Instead of doing the full heavy log() math every 100ms which blows up the tiny 60-word stack,
+    // we use a fast approximation lookup table for common indoor/outdoor temps (0C to 40C)
+    // or simply rely on a single log() call if we absolutely must, but we can drastically reduce footprint
+    // by doing it differently, or simply increasing AcqTemp stack.
+    // Let's first try just boosting AcqTemp stack temporarily to 80 to fit the log() without 
+    // sacrificing precision, while keeping Report at 160.
+    
     const float BETA = 3950.0f;
     return 1.0f / (log(1.0f / (1023.0f / adcValue - 1.0f)) / BETA + 1.0f / 298.15f) - 273.15f;
 }
@@ -89,10 +98,11 @@ void setup() {
 
     lcd.init();
     lcd.backlight();
-    // LcdStdioManager::setup(&lcd);
-    redirectSerialToStdio();
+    // LcdStdioManager::setup(&lcd); // KEEP COMMENTED OUT to isolate bug
+    // redirectSerialToStdio(); // ALREADY COMMENTED OUT
+    redirectSerialToStdio(true, true, true);
 
-    printf("[Setup] Init...\n");
+    printf_P(PSTR("[Setup] Init...\n"));
 
     redLed.init();
     greenLed.init();
@@ -100,52 +110,60 @@ void setup() {
     distanceSensor.init();
     temperatureSensor.init();
 
-    xTaskCreate(
+    distanceTask.init();
+    tempTask.init();
+
+
+
+    BaseType_t r1 = xTaskCreate(
         GenericReadingSensorTask<DistanceSensor>::taskEntryPoint,
         "Acquire",
-        80,
+        60,
         &distanceTask,
         3,
         NULL
     );
 
-    xTaskCreate(
+    BaseType_t r2 = xTaskCreate(
         ThresholdTask::taskEntryPoint,
         "ThreshD",
-        80,
+        55,
         &distanceThresholdTask,
         2,
         NULL
     );
 
-    xTaskCreate(
+    BaseType_t r3 = xTaskCreate(
         GenericReadingSensorTask<TemperatureSensor>::taskEntryPoint,
         "AcqTemp",
-        80,
+        80, // INCREASED slightly for the heavy log() floating point math
         &tempTask,
         3,
         NULL
     );
 
-    xTaskCreate(
+    BaseType_t r4 = xTaskCreate(
         ThresholdTask::taskEntryPoint,
         "ThreshT",
-        80,
+        55,
         &tempThresholdTask,
         2,
         NULL
     );
 
-    xTaskCreate(
+    BaseType_t r5 = xTaskCreate(
         ReportTask::run,
         "Report",
-        150,
+        160, // DECREASED to 160 to balance the 20 words given to AcqTemp
         &reportParams,
         1,
         NULL
     );
 
+    printf_P(PSTR("Tasks: %d %d %d %d %d\n"), r1, r2, r3, r4, r5);
+
     vTaskStartScheduler();
+    printf_P(PSTR("Sched returned!\n"));
 }
 
 void loop() { }

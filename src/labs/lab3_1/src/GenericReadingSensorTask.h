@@ -3,6 +3,7 @@
 #include "GenericTask.h"
 #include <Arduino_FreeRTOS.h>
 #include <semphr.h>
+#include <Arduino.h>
 
 enum AlertState : uint8_t {
     ALERT_NORMAL,         // within threshold band
@@ -59,7 +60,13 @@ public:
         data.name                = cfg.name;
         data.thresholdIntervalMs = cfg.thresholdIntervalMs;
         data.debounceRequired    = cfg.debounceRequired;
-        data.xSemaphore          = xSemaphoreCreateMutex();
+        data.xSemaphore          = NULL;
+    }
+
+    void init() {
+        if (data.xSemaphore == NULL) {
+            data.xSemaphore = xSemaphoreCreateMutex();
+        }
     }
 
     SensorData* getDataPtr() { return &data; }
