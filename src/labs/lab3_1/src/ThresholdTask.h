@@ -3,6 +3,7 @@
 #include "GenericReadingSensorTask.h"
 #include "GenericTask.h"
 #include <Arduino_FreeRTOS.h>
+#include <semphr.h>
 
 class ThresholdTask : public GenericTask<ThresholdTask> {
 private:

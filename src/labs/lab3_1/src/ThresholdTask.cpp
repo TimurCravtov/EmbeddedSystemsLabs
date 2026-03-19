@@ -9,7 +9,10 @@ void ThresholdTask::taskEntryPoint(void* parameters) {
 
 void ThresholdTask::_run(void* parameters) {
     while (true) {
-        processThreshold();
+        if (xSemaphoreTake(data->xSemaphore, portMAX_DELAY) == pdTRUE) {
+            processThreshold();
+            xSemaphoreGive(data->xSemaphore);
+        }
         vTaskDelay(pdMS_TO_TICKS(data->thresholdIntervalMs));
     }
 }

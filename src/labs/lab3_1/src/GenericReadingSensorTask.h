@@ -2,6 +2,7 @@
 
 #include "GenericTask.h"
 #include <Arduino_FreeRTOS.h>
+#include <semphr.h>
 
 enum AlertState : uint8_t {
     ALERT_NORMAL,         // within threshold band
@@ -32,6 +33,7 @@ struct SensorData {
     const char* name;
     uint16_t thresholdIntervalMs;
     uint8_t debounceRequired;
+    SemaphoreHandle_t xSemaphore;
 };
 
 // Task 1: Acquisition just reads raw sensor data periodically
@@ -57,6 +59,7 @@ public:
         data.name                = cfg.name;
         data.thresholdIntervalMs = cfg.thresholdIntervalMs;
         data.debounceRequired    = cfg.debounceRequired;
+        data.xSemaphore          = xSemaphoreCreateMutex();
     }
 
     SensorData* getDataPtr() { return &data; }
@@ -72,7 +75,12 @@ public:
             if (converter != nullptr) {
                 val = converter(val);
             }
-            data.rawValue = val;
+
+            if (xSemaphoreTake(data.xSemaphore, portMAX_DELAY) == pdTRUE) {
+                data.rawValue = val;
+                xSemaphoreGive(data.xSemaphore);
+            }
+
             vTaskDelay(pdMS_TO_TICKS(config.readingIntervalMs));
         }
     }

@@ -103,7 +103,7 @@ void setup() {
     xTaskCreate(
         GenericReadingSensorTask<DistanceSensor>::taskEntryPoint,
         "Acquire",
-        64,
+        80,
         &distanceTask,
         3,
         NULL
@@ -112,7 +112,7 @@ void setup() {
     xTaskCreate(
         ThresholdTask::taskEntryPoint,
         "ThreshD",
-        64,
+        80,
         &distanceThresholdTask,
         2,
         NULL
@@ -121,7 +121,7 @@ void setup() {
     xTaskCreate(
         GenericReadingSensorTask<TemperatureSensor>::taskEntryPoint,
         "AcqTemp",
-        64,
+        80,
         &tempTask,
         3,
         NULL
@@ -130,7 +130,7 @@ void setup() {
     xTaskCreate(
         ThresholdTask::taskEntryPoint,
         "ThreshT",
-        64,
+        80,
         &tempThresholdTask,
         2,
         NULL
