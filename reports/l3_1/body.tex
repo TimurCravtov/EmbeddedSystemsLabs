@@ -190,10 +190,28 @@ Figure \ref{fig:layers_temperature} shows the layer decomposition for the analog
 
 The system provides real-time monitoring of both sensors. For the distance sensor, the threshold is set at $15cm \dots 25cm$. For the temperature sensor, the range is $10^\circ C \dots 30^\circ C$.
 
+The system's behavior is summarized through structured UART reports, which indicate the current state of each sensor (OK, LOW, or HIGH) after applying threshold-based conditioning with hysteresis and a 5-sample debounce counter.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Images/work/sim/all.png}
+    \caption{Simulation Result: Dual Sensor Operation showing various states (OK, LOW, HIGH)}
+    \label{fig:sim-all}
+\end{figure}
+
+As shown in Figure \ref{fig:sim-all}, the system correctly transitions between states:
+\begin{itemize}
+    \item \textbf{OK}: The sensor value is within the nominal range defined by the high and low thresholds.
+    \item \textbf{LOW}: The value has dropped below the lower threshold (including hysteresis margin).
+    \item \textbf{HIGH}: The value has exceeded the upper threshold (including hysteresis margin).
+\end{itemize}
+
+The hysteresis ensures that the state does not flicker if the sensor value oscillates around the threshold limit. The debouncing mechanism requires the condition to be true for multiple consecutive cycles before a state change is confirmed and reported.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{Images/work/sim/ok.png}
-    \caption{Simulation Result: Dual Sensor Normal Operation}
+    \caption{Simulation Result: Dual Sensor Normal Operation Detail}
     \label{fig:sim-ok}
 \end{figure}
 

@@ -182,12 +182,24 @@ A key feature of this implementation is the enhanced reporting. The \texttt{Repo
     \item \textbf{ASCII Graph}: A dynamic bar representing the filtered value within its configured range.
 \end{itemize}
 
+The simulation results in Figure \ref{fig:sim-report} demonstrate the effectiveness of the three-stage pipeline. Even when the raw sensor data contains significant noise or sudden spikes, the median filter effectively removes the outliers, and the EMA filter provides a smooth output suitable for control or further analysis.
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{Images/work/hysteresis_concept.png}
-    \caption{Console Visualization: Real-time Pipeline and ASCII Graph}
+    \includegraphics[width=0.95\textwidth]{Images/work/sim/report_output.png}
+    \caption{Console Visualization: Real-time Signal Conditioning Pipeline and ASCII Graphs}
     \label{fig:sim-report}
 \end{figure}
+
+The output shows how the raw value is transformed through the pipeline:
+\begin{enumerate}
+    \item \textbf{Raw}: The direct reading from the sensor.
+    \item \textbf{Sat (Saturated)}: Clamped to the $[min, max]$ range.
+    \item \textbf{Med (Median)}: The result of the median filter window, effectively removing "spikes".
+    \item \textbf{Flt (Filtered)}: The final output after the Exponential Moving Average smoothing.
+\end{enumerate}
+
+The ASCII bar provides an intuitive visual representation of the current value relative to the sensor's full scale, allowing for quick system monitoring without complex external tools.
 
 \section{Conclusion}
 
