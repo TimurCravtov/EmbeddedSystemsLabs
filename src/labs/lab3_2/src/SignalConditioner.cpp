@@ -33,23 +33,40 @@ float SignalConditioner::computeMedian() const {
     return tmp[n / 2];
 }
 
-void SignalConditioner::addSample(float raw) {
-    lastRaw = raw;
-    float sat = saturate(raw);
-    lastSaturated = sat;
-    buffer[index] = sat;
-    index = (index + 1) % bufSize;
-    if (count < bufSize) count++;
+void SignalConditioner::addSample(float raw) { 
+    lastRaw = raw; 
+    float sat = saturate(raw); 
+    lastSaturated = sat; 
+    buffer[index] = sat; 
+    index = (index + 1) % bufSize; 
+    if (count < bufSize) count++; 
 
-    // Compute median then apply EMA
-    float median = computeMedian();
-    lastMedian = median;
-    if (!emaInitialised) {
-        emaValue = median;
-        emaInitialised = true;
-    } else {
-        emaValue = emaAlpha * median + (1.0f - emaAlpha) * emaValue;
+    // 1. Compute Weighted Average
+    float weightedSum = 0.0f;
+    int weightSum = 0;
+
+    for (int i = 0; i < count; i++) {
+        // Calculate the actual position in the circular buffer
+        // (index - 1) is the most recent sample added
+        int pos = (index - 1 - i + bufSize) % bufSize;
+        
+        // Linear weight: newest sample gets weight 'count', oldest gets 1
+        int weight = count - i; 
+        weightedSum += buffer[pos] * weight;
+        weightSum += weight;
     }
+    
+    float weightedAvg = (weightSum > 0) ? (weightedSum / (float)weightSum) : sat;
+
+    // 2. Compute median then apply EMA (Existing Logic)
+    float median = computeMedian(); 
+    lastMedian = median; 
+    if (!emaInitialised) { 
+        emaValue = median; 
+        emaInitialised = true; 
+    } else { 
+        emaValue = emaAlpha * median + (1.0f - emaAlpha) * emaValue; 
+    } 
 }
 
 float SignalConditioner::getFiltered() const {

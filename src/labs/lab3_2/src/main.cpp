@@ -46,7 +46,6 @@ ReportData reportDataArray[2] = {
 };
 ReportTask reportTaskObj(reportDataArray, 2, 2000);  // report every 2 s
 
-// --- Queues ---
 QueueHandle_t tempRawQueue;
 QueueHandle_t distRawQueue;
 
@@ -63,31 +62,25 @@ void setup() {
     reportDataArray[0].xSemaphore = xSemaphoreCreateMutex();
     reportDataArray[1].xSemaphore = xSemaphoreCreateMutex();
 
-    // Wire acquisition tasks → raw queues (no direct report entry — conditioning writes it)
     tempAcqTask.setQueue(tempRawQueue);
     distAcqTask.setQueue(distRawQueue);
 
-    // Wire conditioning tasks: in from raw queue, out to report entry
     tempCondTask.setInQueue(tempRawQueue);
     tempCondTask.setReportEntry(&reportDataArray[0]);
 
     distCondTask.setInQueue(distRawQueue);
     distCondTask.setReportEntry(&reportDataArray[1]);
 
-    // --- Create FreeRTOS tasks ---
-    // Acquisition (high priority — must not miss samples)
     xTaskCreate([](void* p) { static_cast<SensorAquisitionTask*>(p)->run(); },
                 "AcqTemp", 160, &tempAcqTask, 2, NULL);
     xTaskCreate([](void* p) { static_cast<SensorAquisitionTask*>(p)->run(); },
                 "AcqDist", 160, &distAcqTask, 2, NULL);
 
-    // Conditioning (medium priority)
     xTaskCreate([](void* p) { static_cast<ConditioningTask*>(p)->run(); },
                 "CondTemp", 128, &tempCondTask, 1, NULL);
     xTaskCreate([](void* p) { static_cast<ConditioningTask*>(p)->run(); },
                 "CondDist", 128, &distCondTask, 1, NULL);
 
-    // Report (lowest priority)
     xTaskCreate([](void* p) { static_cast<ReportTask*>(p)->run(); },
                 "Report", 256, &reportTaskObj, 1, NULL);
 
