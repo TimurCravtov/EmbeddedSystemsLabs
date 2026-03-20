@@ -1,0 +1,346 @@
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Objective and Technical analysis}
+
+This laboratory work aims to design and implement a simple embedded system that allows user interaction with a hardware component (LED) via serial communication. The system will be structured using a layered architecture to ensure modularity and separation of concerns. The implementation will include drivers for controlling the LED and managing serial communication using \texttt{stdio.h} library by redirecting input/output streams, as well as a main program that processes user commands to control the LED state.
+
+\subsection{Serial communication}
+
+Serial communication is a method of transmitting data one bit at a time over a communication channel \cite{serial_communication}. In this laboartory work, the communication will happen trough the serial interface of the Arduino board. The serial port is also called UART (Universal Asynchronous Receiver/Transmitter) and it allows for asynchronous communication between the microcontroller and a computer or other devices. Figure \ref{fig:serial_communication} illustrates the wiring of serial communicaton. As one can see, a serial bus consists of two main lines: the transmit line (TX) and the receive line (RX). The TX line is used to send data from the microcontroller to the computer, while the RX line is used to receive data from the computer to the microcontroller. In this laboratory work, we will use the serial communication to allow the user to send commands to control the LED state, and the microcontroller will respond accordingly by turning the LED on or off based on the received commands.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\textwidth]{Images/work/serial_bus.png}
+    \caption{Serial communication bus}
+    \label{fig:serial_communication}
+\end{figure}
+
+\subsection{\texttt{stdio.h} library}
+
+The \texttt{stdio.h} library is a standard C library that provides functions for input and output operations, such as reading from the keyboard and writing to the console. In this laboratory work, we will utilize the \texttt{stdio.h} library to handle user input and output through the serial interface of the Arduino board. By redirecting the standard input and output streams to the serial interface, we can use familiar functions like \texttt{printf()} and \texttt{scanf()} to interact with the user \cite{stdio}. To redirect the standard streams, one can use the \texttt{fdev\_setup\_stream()} function to set up the UART streams for input and output, and then assign the standard input, output, and error streams. If \texttt{\_RW} mode is enabled, the same stream can be used for both input and output.
+
+\subsection{Serial Terminal Emulator}
+
+A serial terminal emulator is a software application that allows users to interact with a serial device, such as an Arduino board, through a graphical interface. The core functionality of a emulator:
+
+\begin{itemize}
+    \item \textbf{Serial Port Selection:} The emulator allows users to select the appropriate serial port to connect to the device. This is crucial for establishing communication between the computer and the microcontroller.
+    \item \textbf{Baud Rate Configuration:} Users can configure the baud rate, which is the speed of data transmission. The baud rate must match the settings of the microcontroller for successful communication.
+    \item \textbf{Data Transmission:} The emulator provides an interface for sending data to the microcontroller and receiving data from it. This allows users to interact with the device in real-time, sending commands and receiving responses.
+    \item \textbf{Data Display:} The emulator displays the incoming data from the microcontroller in a readable format, allowing users to monitor the communication and debug their code effectively.
+\end{itemize}
+
+Examples of popular serial terminal emulators include PuTTY, Tera Term, RealTerm, CoolTerm, minicom, GNU screen, GtkTerm, and the built-in Serial Monitor in the Arduino IDE and the PlatformIO Serial Monitor \cite{toradex_serial_emulators}. These tools are essential for testing and debugging embedded systems that rely on serial communication. 
+
+\subsection{Visual Studio Code extension \texttt{Platform.IO}}
+
+Platform.IO is an open-source ecosystem for IoT development that provides a unified interface for building, testing, and deploying embedded applications \cite{platformio}. It integrates with Visual Studio Code to offer a powerful development environment for embedded systems. Key features of Platform.IO include: 
+
+\begin{itemize}
+    \item \textbf{Multi-platform Support:} Platform.IO supports a wide range of microcontroller platforms, including Arduino, ESP32, STM32, and many others. This allows developers to work with their preferred hardware without needing to switch development environments.
+    \item \textbf{Library Management:} Platform.IO provides a built-in library manager that allows developers to easily search for, install, and manage libraries for their projects. This simplifies the process of adding functionality to embedded applications.
+    \item \textbf{Build System:} Platform.IO uses a powerful build system that supports multiple build configurations and allows for easy integration with continuous integration tools. This helps streamline the development process and ensures that code is consistently built and tested.
+    \item \textbf{Serial Monitor:} Platform.IO includes a built-in serial monitor that allows developers to interact with their embedded devices in real-time. This is particularly useful for debugging and testing applications that rely on serial communication.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Images/work/platform-io.png}
+    \caption{Platform.IO extension for Visual Studio Code}
+    \label{fig:platformio}
+\end{figure}
+
+
+\subsection{Hardware emulation with SimulIDE}
+
+The physical component of this laboratory work is an LED connected to an Arduino board. In real hardware implementation, the LED would be connected to a digital output pin of the Arduino through a current-limiting resistor. However, for testing and demonstration purposes, we can use SimulIDE, a simple real-time electronics simulator \cite{simulide}, represented in Figure \ref{fig:simulide_setup}. SimulIDE allows us to create virtual circuits and simulate their behavior without needing physical hardware. In SimulIDE, we can set up a virtual circuit that includes an Arduino board and an LED, and we can test our code by sending commands through the serial monitor to control the LED state. This provides a convenient way to verify the functionality of our code and the design of our system before deploying it on actual hardware. SimulIDE also allows uploading the real \texttt{.hex} file generated by the Platform.IO build process, which means we can test the exact same code that will run on the physical Arduino board.
+
+\subsection{LED}
+
+An LED (Light Emitting Diode) is a semiconductor device that emits light when an electric current passes through it. In this laboratory work, the LED serves as the output device that we will control using the Arduino board. There is only command provided by Arduino API to control the LED - \texttt{digitalWrite()}, which allows us to set the state of a digital pin to either HIGH (turning the LED on) or LOW (turning the LED off). The LED is connected to a digital output pin of the Arduino through a current-limiting resistor to prevent damage to both the LED and the microcontroller. By sending commands through serial communication, we can control the state of the LED, allowing it to turn on or off based on user input.
+
+Figure \ref{fig:led} shows an example of an LED connected to an electronic circuit, which is similar to the setup we will use in this laboratory work. The LED is typically connected in series with a resistor to limit the current flowing to 20mA \cite{led-limit} through it, ensuring that it operates within safe parameters. The digital output pin of the Arduino will be connected to the anode of the LED, while the cathode will be connected to ground through the resistor. This configuration allows us to control the LED state by setting the digital pin HIGH or LOW using the Arduino API.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Images/work/led_ciscuit.png}
+    \caption{LED on an electronic circuit}
+    \label{fig:led}
+\end{figure}
+
+\textit{Note}: most common Arduino boards have a built-in LED connected to the D13 pin, which can be used for testing purposes without needing to set up an external circuit.
+
+\section{System design}
+
+\subsection{System architecture}
+
+The system is designed to control an LED connected to an Arduino board via serial communication. The schema of the system architecture is presented in Figure \ref{fig:system_architecture}. The main components of the system include:
+
+\begin{itemize}
+    \item \textbf{Arduino Board:} The microcontroller that interfaces with the LED and handles serial communication.
+    \item \textbf{LED:} The output device that will be turned on or off based on commands received via serial communication.
+    \item \textbf{Serial Communication Interface:} Facilitates the exchange of commands between the user and the Arduino board.
+    \item \textbf{User Input:} The user sends commands ("led on" or "led off") through a serial terminal to control the LED state.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Images/work/architecture.png}
+    \caption{System Architecture Diagram}
+    \label{fig:system_architecture}
+\end{figure}
+
+\subsection{Flowchart of the program}
+
+The flowchart in Figure \ref{fig:flowchart} illustrates the logic of the program running on the Arduino board. The program continuously listens for user input via serial communication and processes commands to control the LED state.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/work/flow.png}
+    \caption{Program Flowchart}
+    \label{fig:flowchart}
+\end{figure}
+
+In this flowchart, there is an infinite loop that waits for user input. When a command is received, it checks if the command is "led on" or "led off" and turns the LED on or off accordingly. If the command is unrecognized, it prompts the user to enter a valid command. 
+
+\subsection{Electronic circuit}
+
+Figure \ref{fig:circuit_diagram} illustrates the electronic circuit designed for controlling an LED using an Arduino board. The circuit consists of an LED connected to a digital output pin of the Arduino through a current-limiting resistor. The ground pin of the Arduino is connected to the cathode of the LED, while the anode is connected to the resistor, which in turn is connected to the designated digital pin.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{Images/work/circuit.png}
+    \caption{Circuit diagram of the LED control system}
+    \label{fig:circuit_diagram}
+\end{figure}
+
+Since the Arduino board operates at 5V, a resistor value of 220$\Omega$ is chosen to limit the current through the LED to a safe level, preventing damage to both the LED and the Arduino pin.
+
+Following the Ohm's law, the current flowing through the LED can be calculated as:
+
+$$
+I = \frac{V_{supply} - V_{LED}}{R} = \frac{5V - 2V}{220\Omega} \approx 13.64mA
+$$ which is within the safe operating limits for both the LED and the Arduino pin.
+
+Resistors with that value are marked with those color bands:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.2\textwidth]{Images/resistor.png}
+    \caption{220$\Omega$ resistor with color bands}
+    \label{fig:resistor}
+\end{figure}
+
+\subsection{Layered design (hardware/software)}
+
+\subsubsection{LED Layered design}
+
+Figure \ref{fig:led_layered_design} presents the layered design for the LED control module. The design is structured into six layers:
+
+\begin{itemize}
+    \item \textbf{APP} - outermost application layer, uses higher-level functions to control the LED such as \texttt{led.on()}
+    \item \textbf{SRV} - service layer, provides services to the application layer and interacts with the lower layers. For example, it may include functions to manage LED states.
+    \item \textbf{ECAL} - embedded component abstraction layer, abstracts the hardware specifics of the LED, providing a uniform interface for higher layers.
+    \item \textbf{MCAL} - microcontroller abstraction layer, interfaces directly with the microcontroller's hardware registers to control the LED.
+    \item \textbf{MCU} - microcontroller layer, represents the actual microcontroller hardware that controls the LED. Here - D13 pin of Arduino.
+    \item \textbf{ECU} - embedded component unit layer, represents the physical LED component connected to the microcontroller.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Images/work/layers_led.png}
+    \caption{LED Layered Design}
+    \label{fig:led_layered_design}
+\end{figure}
+
+\subsubsection{Serial I/O Layered design}
+
+Figure \ref{fig:serial_layered_design} illustrates the layered design for the Serial I/O module. The design is structured into six layers:
+
+\begin{itemize}
+    \item \textbf{APP} - outermost application layer, uses higher-level functions to handle serial communication such as \texttt{readCommand()}
+    \item \textbf{SRV} - service layer, provides services to the application layer and interacts with the lower layers. For example, it may include functions to manage serial data.
+    \item \textbf{ECAL} - embedded component abstraction layer, abstracts the hardware specifics of the serial communication, providing a uniform interface for higher layers.
+    \item \textbf{MCAL} - microcontroller abstraction layer, interfaces directly with the microcontroller's hardware registers to manage serial communication.
+    \item \textbf{MCU} - microcontroller layer, represents the actual microcontroller hardware that handles serial communication. Here - UART module of Arduino.
+    \item \textbf{ECU} - embedded component unit layer, represents the physical serial communication interface connected to the microcontroller, such as user terminal
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Images/work/layers_serial.png}
+    \caption{Serial I/O Layered Design}
+    \label{fig:serial_layered_design}
+\end{figure}
+
+\section{Implementation and results}
+
+\subsection{Memory usage}
+
+Since the physical demonstration of the system is performed on a MCU with limited resources, it is crucial to analyze the memory usage of the implemented code. The memory usage can be categorized into two main types: Flash memory (program storage) and SRAM (data storage). Arduino Uno and Arduino Nano both have 32 KB of Flash memory and 2 KB of SRAM \cite{arduino_memory}. Hence, the implemented code should be optimized to fit within these constraints. Since the source code is relatively simple, most of the Flash memory will be empty and can be used for storing the string constants. Thankfully, \texttt{stdio} library provides a way to store string constants in Flash memory using the \texttt{PSTR()} macro and \texttt{printf\_P()} function, which helps to save SRAM. The actual memory usage can be determined by compiling the code and checking the output provided by the Platform.IO, which shows the percentage of Flash and SRAM used.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/work/build_ram_usage.png}
+    \caption{Memory usage of the implemented code}
+    \label{fig:build_ram_usage}
+\end{figure}
+
+\subsection{Driver implementation}
+
+The driver implementation for the LED control system consists of two main components: the LED driver and the Serial I/O driver. The LED driver is responsible for controlling the state of the LED, providing functions to turn it on and off. The Serial I/O driver manages the communication between the user and the Arduino board, allowing the user to send commands to control the LED. The implementation is structured in a layered design, as described in the previous section, to ensure modularity and separation of concerns. The source code for both drivers is provided in the appendix, with the LED driver containing functions such as \texttt{led.on()} and \texttt{led.off()}, and the Serial I/O driver containing function to redirect Serial IO stream to STDIO. The source code of both drivers is available in the GitHub repository \cite{github} and in Appendix for both led \ref{lst:led_cpp} and serialio \ref{lst:serialio_cpp}.
+
+Led driver implementation, simplified, is represented on figure \ref{fig:led_driver}. As mentioned, it has a high level interface for the application layer, which abstracts the hardware specifics of controlling the LED provided by \texttt{digitalWrite()} function of the Arduino API. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Images/work/leddriver.png}
+    \caption{LED driver class diagram}
+    \label{fig:led_driver}
+\end{figure}
+
+Simplified Serial I/O driver implementation is shown on figure \ref{fig:serialio_driver}. It provides a function to redirect the standard input and output streams to the serial interface of the Arduino board, allowing the use of standard I/O functions for communication.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\textwidth]{Images/work/serial_driver.png}
+    \caption{Serial I/O driver class diagram}
+    \label{fig:serialio_driver}
+\end{figure}
+
+\subsection{Main program implementation}
+
+The entry point of the program is the \texttt{main.cpp} file \ref{lst:main_cpp}, which contains the main loop that listens for user input via serial communication and processes commands to control the LED state. The program initializes the Serial communication and the LED driver, then enters an infinite loop where it waits for user input. When a command is received, it checks if the command is "led on" or "led off" and calls the appropriate functions from the LED driver to change the state of the LED. If an unrecognized command is received, it prompts the user to enter a valid command. The main program is designed to be simple and efficient, ensuring that it can run on microcontrollers with limited resources while providing a responsive user experience.
+
+To keep the main function minimal, a \texttt{LedController} file is implemented, which contains the logic for processing user commands and controlling the LED state. This separation of concerns allows for better code organization and maintainability. The main function simply initializes the necessary components and calls the \texttt{LedController} to handle the user input and control the LED accordingly.
+
+\subsection{Simulation}
+
+The implemented system successfully allows the user to control the LED state via serial commands. When the user inputs "led on", the LED lights up, and when "led off" is entered, the LED turns off. The system responds correctly to valid commands and prompts the user for valid input when unrecognized commands are received.
+
+The steps shows in the figures below are the following:
+
+\begin{enumerate}
+    \item Figure \ref{fig:simulide_setup} shows the SimulIDE project setup for the LED control system.
+    \item Figure \ref{fig:serial_monitor_prompt} displays the serial monitor prompting the user for input.
+    \item Figure \ref{fig:led_on} illustrates the LED turned on after receiving the "led on" command.
+    \item Figure \ref{fig:already_on} shows the serial monitor indicating that the LED is already on when the "led on" command is sent again.
+    \item Figure \ref{fig:led_off} depicts the LED turned off after receiving the "led off" command.
+    \item Figure \ref{fig:invalid_command} presents the serial monitor displaying an invalid command message when an unrecognized command is entered.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/work/sim/sim_basic.png}
+    \caption{SimulIDE project setup for LED control}
+    \label{fig:simulide_setup}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/work/sim/asks_for_input.png}
+    \caption{Serial monitor prompting for input}
+    \label{fig:serial_monitor_prompt}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/work/sim/led_on.png}
+    \caption{LED turned on after receiving "led on" command}
+    \label{fig:led_on}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/work/sim/already_on.png}
+    \caption{Serial monitor showing that LED is already on}
+    \label{fig:already_on}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/work/sim/led_off.png}
+    \caption{LED turned off after receiving "led off" command}
+    \label{fig:led_off}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{Images/work/sim/unkown_command.png}
+    \caption{Serial monitor showing invalid command message}
+    \label{fig:invalid_command}
+\end{figure}
+
+\section{Conclusion}
+ 
+During this laboratory work I implemented a simply embedded system which allows user interaction with hardware component (LED) via serial communication. The system is designed with a layered architecture to ensure modularity and separation of concerns, making it easier to maintain and extend in the future. The implementation includes a driver for controlling the LED and a driver for managing serial communication, both of which are structured in a way that abstracts hardware specifics from the application layer. These drives are stored in separate files indepdendent of the project and can be included in the \texttt{Platform.IO} project with a simple directive of \texttt{.ino} file: \texttt{lib\_deps = ../../shared}. The main program initializes the necessary components and continuously listens for user input to control the LED state. The system successfully responds to valid commands and provides feedback for invalid commands, demonstrating effective user interaction with the hardware component. 
+
+For this communication, I redirect \texttt{stdin} and \texttt{stdout} to the serial interface of the Arduino board, allowing seamless input and output operations through the serial monitor. Despite the memory usage consequences of using standard I/O functions, the implementation remains efficient and fits within the constraints of the microcontroller one of the reason being the usage of \texttt{F()} macro for string constants to save SRAM. 
+
+Overall, this laboratory work provides a solid foundation for understanding embedded systems design and implementation, particularly in the context of user interaction with hardware components via serial communication.  
+
+\addcontentsline{toc}{section}{References}
+
+\begin{thebibliography}{99}
+
+\bibitem{serial_communication} Serial Communication \url{https://learn.sparkfun.com/tutorials/serial-communication/all}
+
+\bibitem{stdio} AVR-Libc Reference Manual - Standard I/O \url{https://www.nongnu.org/avr-libc/user-manual/group__avr__stdio.html}
+
+\bibitem{github} GitHub repository \url{https://github.com/TimurCravtov/EmbeddedSystemsLabs}
+
+\bibitem{arduino_memory} Arduino Memory specification and architecture \url{https://docs.arduino.cc/learn/programming/memory-guide/}
+
+\bibitem{arduino_led} Arduino LED Control \url{https://roboticsbackend.com/arduino-led-complete-tutorial/}
+
+\bibitem{circuit_diagram_builder} Circuit Diagram Builder \url{https://www.circuit-diagram.org/docs}
+
+\bibitem{led-limit} Standard 5mm LED specification \url{https://www.make-it.ca/5mm-led-specifications/}
+
+\bibitem{platformio} Platform.IO - Embedded Development Ecosystem \url{https://platformio.org/}
+
+\bibitem{simulide} SimulIDE - Simple real time electronics simulator \url{https://simulide.com/p/mcus-/l}
+
+\bibitem{toradex_serial_emulators} Serial terminal emulator overview - Toradex Developer Center \url{https://developer.toradex.com/software/development-resources/serial-terminal-emulator/}
+
+\end{thebibliography}
+
+\appendix
+
+\section{Source Code}
+
+Besides this appendix, the source code is available in the GitHub repository \cite{github} with all build instructions.
+
+\texttt{main.cpp}
+
+\lstinputlisting[style=c,caption={main.cpp},label={lst:main_cpp}]{../../src/labs/lab1_1/src/main.cpp}
+
+\texttt{LedController.h}
+
+\lstinputlisting[style=c,caption={LedController.h},label={lst:ledcontroller_h}]{../../src/labs/lab1_1/src/LedController.h}
+
+\texttt{LedController.cpp}
+
+\lstinputlisting[style=c,caption={LedController.cpp},label={lst:ledcontroller_cpp}]{../../src/labs/lab1_1/src/LedController.cpp}
+
+\texttt{serialio.h}
+
+\lstinputlisting[style=c,caption={serialio.h},label={lst:serialio_h}]{../../src/shared/include/serialio/serialio.h}
+
+\texttt{serialio.cpp}
+
+\lstinputlisting[style=c,caption={serialio.cpp},label={lst:serialio_cpp}]{../../src/shared/src/serialio/serialio.cpp}
+
+\texttt{led.h}
+\lstinputlisting[style=c,caption={led.h},label={lst:led_h}]{../../src/shared/include/led/led.h}
+
+\texttt{led.cpp}
+\lstinputlisting[style=c,caption={led.cpp},label={lst:led_cpp}]{../../src/shared/src/led/led.cpp}
+
+
+

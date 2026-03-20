@@ -18,7 +18,7 @@ void SensorAquisitionTask::run() {
 
         if (reportEntry != NULL && reportEntry->xSemaphore != NULL) {
             xSemaphoreTake(reportEntry->xSemaphore, portMAX_DELAY);
-            reportEntry->value = value;
+            reportEntry->raw = value;
             xSemaphoreGive(reportEntry->xSemaphore);
         }
 

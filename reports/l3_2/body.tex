@@ -1,0 +1,222 @@
+﻿\newpage
+
+\tableofcontents
+
+\section{Objective and Technical Analysis}
+
+The objective of this laboratory work is to implement an advanced signal acquisition and conditioning pipeline for embedded systems. This involves not only reading raw data from sensors but also applying mathematical filters to remove noise and ensure data integrity. The system implements a three-stage conditioning pipeline: **Saturation**, **Median Filtering** (for salt-and-pepper noise), and **Exponential Moving Average (EMA)** for smoothing.
+
+Through this work, the following learning outcomes are pursued:
+\begin{itemize}
+    \item Implementing a multi-stage signal conditioning pipeline.
+    \item Understanding and implementing non-linear filters (Median) and recursive linear filters (EMA).
+    \item Managing intermediate data states (raw, saturated, median, filtered) in a multitasking environment.
+    \item Real-time visualization of the conditioning process via serial interface and ASCII graphs.
+\end{itemize}
+
+\subsection{Signal Conditioning Techniques}
+
+\subsubsection{Saturation (Clamping)}
+Saturation is the simplest form of conditioning, ensuring that the input signal remains within a predefined physical or logical range $[min, max]$ \cite{signal_processing}. It prevents outliers or sensor malfunctions from propagating "impossible" values through the system. This technique is also known as clamping or limiting in signal processing literature \cite{oppenheim}.
+\begin{equation}
+y[n] = \begin{cases} 
+max & \text{if } x[n] > max \\
+min & \text{if } x[n] < min \\
+x[n] & \text{otherwise}
+\end{cases}
+\end{equation}
+
+\subsubsection{Median Filter (Salt-and-Pepper Noise)}
+The Median filter is a non-linear digital filtering technique, often used to remove noise while preserving edges \cite{median_filter}. It is particularly effective against "salt-and-pepper" noise (random isolated spikes) \cite{gonzalez}. For a window of size $N$, the filter outputs the middle value of the sorted window samples. Unlike linear filters, the median filter does not blur sharp edges in the signal, making it ideal for applications where step changes are meaningful.
+\begin{equation}
+y[n] = \text{median}\{x[n], x[n-1], \dots, x[n-N+1]\}
+\end{equation}
+The computational complexity of median filtering is $O(N \log N)$ per sample when using sorting, though more efficient algorithms exist for small window sizes.
+
+\subsubsection{Exponential Moving Average (EMA)}
+EMA is a type of infinite impulse response (IIR) filter that applies weighting factors which decrease exponentially \cite{iir_filters}. It is used to smooth the signal and reduce high-frequency noise \cite{smith_dsp}. The smoothing factor $\alpha$ (between 0 and 1) determines the balance between noise reduction and responsiveness: smaller values provide more smoothing but slower response to genuine changes.
+\begin{equation}
+y[n] = \alpha \cdot x[n] + (1 - \alpha) \cdot y[n-1]
+\end{equation}
+The effective time constant of the EMA filter is $\tau = \frac{1-\alpha}{\alpha}$ samples. This recursive formulation requires only one multiplication, one subtraction, and one addition per sample, making it computationally efficient for embedded systems.
+
+\section{System Design}
+
+\subsection{System Architecture}
+
+The system architecture follows a modular task-based design using FreeRTOS.
+\begin{itemize}
+    \item \textbf{Acquisition Task}: Reads raw data from sensors (NTC Thermistor and Ultrasonic Sensor).
+    \item \textbf{Conditioning Task}: Consumes raw values from a queue and applies the \texttt{SignalConditioner} pipeline.
+    \item \textbf{Report Task}: Periodic reporting of the entire pipeline state with color-coded console output and ASCII graphs.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Images/work/architecture_3_2.png}
+    \caption{System Architecture Diagram for Lab 3.2}
+    \label{fig:system_architecture}
+\end{figure}
+
+\subsection{Circuit Diagram}
+
+Figure \ref{fig:circuit} shows the hardware connections between the ATmega2560 microcontroller and the sensors. The circuit consists of two main sensor interfaces connected to the microcontroller, each with distinct signal characteristics and interfacing requirements.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Images/work/circuit.png}
+    \caption{Circuit Diagram: Sensor Connections}
+    \label{fig:circuit}
+\end{figure}
+
+\subsubsection{HC-SR04 Ultrasonic Distance Sensor Connections}
+The HC-SR04 is a widely-used ultrasonic ranging module that provides 2cm to 400cm of non-contact measurement functionality with a ranging accuracy that can reach up to 3mm \cite{hcsr04}. The sensor has four pins that connect directly to the microcontroller:
+
+\begin{itemize}
+    \item \textbf{VCC}: Connected to the 5V power supply rail. The sensor requires a stable 5V supply for proper operation. The current consumption is approximately 15mA during measurement, making it suitable for battery-powered applications with appropriate power management.
+    \item \textbf{GND}: Connected to the ground rail, providing the common reference potential for all signals. A common ground is essential for accurate timing measurements.
+    \item \textbf{TRIG (Trigger)}: Connected to digital pin D3 of the ATmega2560. This input pin receives a 10µs HIGH pulse from the microcontroller to initiate a measurement cycle. The sensor's internal circuitry detects the rising edge and begins the ultrasonic burst.
+    \item \textbf{ECHO}: Connected to digital pin D2 of the ATmega2560. This output pin provides a pulse whose duration is proportional to the measured distance. The relationship is approximately 58µs per centimeter, derived from the speed of sound (343 m/s at 20°C).
+\end{itemize}
+
+The ultrasonic sensor operates on the time-of-flight principle. When triggered, it emits eight 40kHz ultrasonic pulses and simultaneously sets the ECHO pin HIGH. When the reflected sound waves are detected, the ECHO pin goes LOW. The distance is calculated as:
+\begin{equation}
+d = \frac{t_{echo} \times v_{sound}}{2}
+\end{equation}
+where $t_{echo}$ is the pulse duration and $v_{sound} \approx 343$ m/s. The division by 2 accounts for the round-trip of the sound wave.
+
+\subsubsection{NTC Thermistor Temperature Sensor Connections}
+The NTC (Negative Temperature Coefficient) thermistor is a semiconductor device whose resistance decreases predictably with increasing temperature \cite{ntc}. It is connected in a voltage divider configuration:
+
+\begin{itemize}
+    \item \textbf{Voltage Divider Circuit}: The NTC thermistor (nominal resistance 10k$\Omega$ at 25°C) is connected in series with a fixed 10k$\Omega$ resistor between VCC (5V) and GND. The choice of the fixed resistor value (equal to the thermistor's nominal resistance) provides maximum sensitivity near 25°C.
+    \item \textbf{Output Signal}: The junction between the thermistor and the fixed resistor is connected to analog input pin A0 of the ATmega2560. The output voltage varies between approximately 0.5V (hot) and 4.5V (cold) within the operating range.
+    \item \textbf{ADC Reference}: The internal 10-bit ADC uses AVCC (5V) as the reference voltage, providing a resolution of approximately 4.9mV per step. For temperature measurements, this translates to roughly 0.25°C resolution near room temperature.
+\end{itemize}
+
+The voltage divider arrangement allows the microcontroller to measure the thermistor's resistance indirectly through voltage measurement. The relationship between the output voltage $V_{out}$ and the thermistor resistance $R_{NTC}$ is given by:
+\begin{equation}
+V_{out} = V_{CC} \cdot \frac{R_{fixed}}{R_{NTC} + R_{fixed}}
+\end{equation}
+
+As temperature increases, the NTC resistance decreases (hence "negative temperature coefficient"), causing the output voltage at A0 to rise. This behavior is characteristic of NTC thermistors and is exploited for temperature measurement.
+
+\subsubsection{Circuit Connection Summary}
+Table \ref{tab:pin_connections} summarizes the complete pin assignments for the sensor circuit. All connections are direct, without intermediate components such as level shifters, as all components operate at 5V logic levels compatible with the ATmega2560.
+
+\begin{table}[H]
+\centering
+\caption{Microcontroller Pin Assignments}
+\label{tab:pin_connections}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Component} & \textbf{Pin} & \textbf{Function} \\ \hline
+HC-SR04 VCC & 5V rail & Power supply \\ \hline
+HC-SR04 GND & GND rail & Ground reference \\ \hline
+HC-SR04 TRIG & D3 & Trigger input (digital output) \\ \hline
+HC-SR04 ECHO & D2 & Echo output (digital input) \\ \hline
+NTC Thermistor (top) & 5V rail & Connected to VCC \\ \hline
+NTC Thermistor (bottom) & A0 via junction & ADC input \\ \hline
+10k$\Omega$ Fixed Resistor (top) & A0 via junction & ADC input \\ \hline
+10k$\Omega$ Fixed Resistor (bottom) & GND rail & Ground reference \\ \hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Practical Considerations}
+Several practical factors were considered in the circuit design:
+\begin{itemize}
+    \item \textbf{Signal Noise}: Raw sensor readings contain inherent noise from various sources: acoustic reflections for the ultrasonic sensor and electrical interference for the thermistor circuit. The signal conditioning pipeline addresses these issues.
+    \item \textbf{ADC Noise}: The thermistor circuit is susceptible to electrical noise, especially in environments with switching loads. A small capacitor (0.1µF) can be added between A0 and GND to filter high-frequency noise.
+    \item \textbf{Self-heating}: Passing current through the thermistor causes self-heating, which can introduce measurement errors. The voltage divider current is approximately 250µA at 25°C, which minimizes self-heating effects.
+\end{itemize}
+
+\subsection{Conditioning Pipeline Flow}
+
+Figure \ref{fig:conditioning_pipeline} illustrates the data flow through the \texttt{SignalConditioner} class. Each sample is first clamped, then stored in a circular buffer for median calculation, and finally passed through the EMA stage.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Images/work/conditioning_pipeline.png}
+    \caption{Signal Conditioning Pipeline Flowchart}
+    \label{fig:conditioning_pipeline}
+\end{figure}
+
+\section{Implementation and Results}
+
+\subsection{Software Architecture}
+
+The \texttt{SignalConditioner} class encapsulates the mathematical logic, while the \texttt{ConditioningTask} manages the FreeRTOS integration.
+
+\begin{itemize}
+    \item \textbf{Wait for Data}: Task blocks on \texttt{xQueueReceive} until a raw sample arrives.
+    \item \textbf{Process}: Calls \texttt{conditioner.addSample(raw)}.
+    \item \textbf{Shared State}: Updates the \texttt{ReportData} structure protected by a Mutex, storing all intermediate values (\texttt{raw}, \texttt{saturated}, \texttt{median}, \texttt{filtered}).
+\end{itemize}
+
+\subsection{Layered Design}
+
+\subsubsection{Distance Sensor Driver}
+Figure \ref{fig:layers_distance} shows the layer decomposition for the pulse-based digital sensor.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Images/work/layers_distance.png}
+    \caption{Distance Sensor layering}
+    \label{fig:layers_distance}
+\end{figure}
+
+\subsubsection{Temperature Sensor Driver}
+Figure \ref{fig:layers_temperature} shows the layer decomposition for the analog sensor. The ECAL layer here includes the mathematical transformation from ADC counts to Celsius.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Images/work/layers_temperature.png}
+    \caption{Temperature Sensor layering}
+    \label{fig:layers_temperature}
+\end{figure}
+
+\subsection{Reporting and Visualization}
+
+A key feature of this implementation is the enhanced reporting. The \texttt{ReportTask} outputs a detailed breakdown of the pipeline for each sensor:
+\begin{itemize}
+    \item \textbf{Status}: OK/LOW/HIGH based on saturation limits.
+    \item \textbf{Pipeline Path}: Visual string showing $Raw \rightarrow Sat \rightarrow Med \rightarrow Filtered$.
+    \item \textbf{ASCII Graph}: A dynamic bar representing the filtered value within its configured range.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Images/work/hysteresis_concept.png}
+    \caption{Console Visualization: Real-time Pipeline and ASCII Graph}
+    \label{fig:sim-report}
+\end{figure}
+
+\section{Conclusion}
+
+This laboratory work successfully implemented a robust signal conditioning system. By combining saturation, median filtering, and EMA, we created a pipeline that is resilient to both isolated noise spikes and continuous high-frequency fluctuations. The modular architecture using FreeRTOS ensures that conditioning can run independently of acquisition, while the detailed reporting provides full visibility into the system's internal state.
+
+\addcontentsline{toc}{section}{References}
+\begin{thebibliography}{99}
+\bibitem{freertos} FreeRTOS API Reference, \url{https://www.freertos.org/a00106.html}
+\bibitem{hcsr04} HC-SR04 Ultrasonic Ranging Module Datasheet, \url{https://cdn.sparkfun.com/datasheets/Sensors/Proximity/HCSR04.pdf}
+\bibitem{ntc} NTC Thermistor Principles and Applications, Vishay, \url{https://www.vishay.com/docs/29053/ntccomp.pdf}
+\bibitem{signal_processing} Lyons, R.G., "Understanding Digital Signal Processing", 3rd ed., Prentice Hall, 2010.
+\bibitem{oppenheim} Oppenheim, A.V., Schafer, R.W., "Discrete-Time Signal Processing", 3rd ed., Pearson, 2009.
+\bibitem{median_filter} Huang, T.S. et al., "The Median Filter and Its Variations", in "Two-Dimensional Digital Signal Processing II", Springer, 1981.
+\bibitem{gonzalez} Gonzalez, R.C., Woods, R.E., "Digital Image Processing", 4th ed., Pearson, 2018.
+\bibitem{iir_filters} Proakis, J.G., Manolakis, D.G., "Digital Signal Processing: Principles, Algorithms, and Applications", 4th ed., Pearson, 2006.
+\bibitem{smith_dsp} Smith, S.W., "The Scientist and Engineer's Guide to Digital Signal Processing", California Technical Publishing, 1997.
+\bibitem{sensor_interfaces} Fraden, J., "Handbook of Modern Sensors: Physics, Designs, and Applications", 5th ed., Springer, 2016.
+\bibitem{embedded_software} Barr, M., Massa, A., "Programming Embedded Systems in C and C++", O'Reilly Media, 2006.
+\end{thebibliography}
+
+\appendix
+\section{Source Code}
+Full source code for Lab 3.2 is available in the repository.
+
+\texttt{SignalConditioner.cpp}
+\lstinputlisting[style=c,caption={SignalConditioner.cpp}]{../../src/labs/lab3_2/src/SignalConditioner.cpp}
+
+\texttt{ConditioningTask.cpp}
+\lstinputlisting[style=c,caption={ConditioningTask.cpp}]{../../src/labs/lab3_2/src/ConditioningTask.cpp}
+
+\texttt{ReportTask.cpp}
+\lstinputlisting[style=c,caption={ReportTask.cpp}]{../../src/labs/lab3_2/src/ReportTask.cpp}

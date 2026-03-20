@@ -13,34 +13,6 @@
       "attrs": { "distance": "301" }
     },
     {
-      "type": "wokwi-led",
-      "id": "led1",
-      "top": -128.4,
-      "left": -361,
-      "attrs": { "color": "red" }
-    },
-    {
-      "type": "wokwi-led",
-      "id": "led2",
-      "top": -99.6,
-      "left": -265,
-      "attrs": { "color": "green" }
-    },
-    {
-      "type": "wokwi-resistor",
-      "id": "r1",
-      "top": -63.25,
-      "left": -441.6,
-      "attrs": { "value": "220" }
-    },
-    {
-      "type": "wokwi-resistor",
-      "id": "r2",
-      "top": -44.05,
-      "left": -316.8,
-      "attrs": { "value": "220" }
-    },
-    {
       "type": "wokwi-ntc-temperature-sensor",
       "id": "temp1",
       "top": -100,
@@ -55,12 +27,6 @@
     [ "ultrasonic1:VCC", "bb1:bp.8", "red", [ "v0" ] ],
     [ "ultrasonic1:ECHO", "mega:2", "green", [ "v0" ] ],
     [ "ultrasonic1:TRIG", "mega:3", "green", [ "v0" ] ],
-    [ "mega:12", "led1:A", "green", [ "v-144", "h249.6" ] ],
-    [ "led1:C", "r1:2", "green", [ "v0" ] ],
-    [ "r1:1", "bb1:bn.12", "green", [ "v0" ] ],
-    [ "led2:C", "r2:2", "green", [ "v0" ] ],
-    [ "mega:13", "led2:A", "green", [ "v96", "h345.6" ] ],
-    [ "r2:1", "bb1:bn.14", "green", [ "v0" ] ],
     [ "temp1:VCC", "bb1:bp.20", "red", [ "v0" ] ],
     [ "temp1:GND", "bb1:bn.22", "black", [ "v0" ] ],
     [ "temp1:OUT", "mega:A0", "orange", [ "v0" ] ]

@@ -16,7 +16,7 @@ float SignalConditioner::saturate(float value) const {
 }
 
 float SignalConditioner::computeMedian() const {
-    // Copy to temp array, then sort (bubble sort — tiny N)
+    // Copy to temp array, then sort (bubble sort tiny N)
     uint8_t n = count < bufSize ? count : bufSize;
     float tmp[7]; // max window we ever use
     for (uint8_t i = 0; i < n; i++) tmp[i] = buffer[i];

@@ -1,10 +1,8 @@
-# Ignore all files in this directory
-*.tex
+﻿# Ignore auxiliary LaTeX files
 *.aux
 *.log
 *.out
 *.toc
-# *.pdf
 *.synctex.gz
 *.fls
 *.fdb_latexmk
@@ -17,6 +15,11 @@
 *.lot
 *(busy)
 
+# Allow report source and final output
+# !*.tex
+!*.pdf
+
+# Ignore specific folders if needed
 *images/
 *hidden/
 *code/

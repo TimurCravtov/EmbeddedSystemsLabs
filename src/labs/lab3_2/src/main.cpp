@@ -41,8 +41,8 @@ ConditioningTask distCondTask(&distConditioner);
 
 // --- Report data array (one entry per sensor) ---
 ReportData reportDataArray[2] = {
-    {0, "Temp (C)",  0.0f, NULL},
-    {0, "Dist (cm)", 0.0f, NULL}
+    {0, "Temp (C)",  -40.0f, 125.0f, 0.0f, 0.0f, 0.0f, 0.0f, NULL},
+    {0, "Dist (cm)", 0.0f,   400.0f, 0.0f, 0.0f, 0.0f, 0.0f, NULL}
 };
 ReportTask reportTaskObj(reportDataArray, 2, 2000);  // report every 2 s
 

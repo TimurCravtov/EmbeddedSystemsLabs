@@ -8,7 +8,12 @@
 struct ReportData {
     int8_t status;
     const char* sensorName;
-    float value;
+    float min;
+    float max;
+    float raw;
+    float saturated;
+    float median;
+    float filtered;
     SemaphoreHandle_t xSemaphore;
 };
 
