@@ -15,8 +15,8 @@
 *.lot
 *(busy)
 
-# Allow report source and final output
-# !*.tex
+# Ignore report source
+*.tex
 !*.pdf
 
 # Ignore specific folders if needed
