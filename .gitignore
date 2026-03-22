@@ -175,3 +175,7 @@ MSVC.cache
 
 
 .ai/
+
+*c_cpp_properties.json
+
+*.

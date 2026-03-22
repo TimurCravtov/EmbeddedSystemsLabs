@@ -17,3 +17,4 @@ float SonicDistanceSensor::read() {
     if (duration == 0) return -1.0f;
     return (duration * 0.0343f) / 2.0f;
 }
+

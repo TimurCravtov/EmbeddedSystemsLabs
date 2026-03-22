@@ -15,12 +15,14 @@ void KeypadStdioManager::setup(Keypad* target) {
 int KeypadStdioManager::getChar(FILE* stream) {
     
     if (_targetKeypad == nullptr) {
-        return EOF; 
+        return _FDEV_EOF; 
     }
 
-    int key = NO_KEY;
-    while (!(key = _targetKeypad->getKey()));
+    char key = _targetKeypad->getKey();
     
-    return key;
-
+    if (key == NO_KEY) {
+        return _FDEV_EOF;
+    }
+    
+    return (int)key;
 }
