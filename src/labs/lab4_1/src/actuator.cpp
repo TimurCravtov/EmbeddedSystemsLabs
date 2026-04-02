@@ -1,22 +1,25 @@
 #include "actuator.h"
 
-RelayActuator::RelayActuator(uint8_t p) : pin(p), state(false) {}
+PwmActuator::PwmActuator(uint8_t p) : pin(p), currentSpeed(0), currentPwm(0) {}
 
-void RelayActuator::begin() {
+void PwmActuator::begin() {
     pinMode(pin, OUTPUT);
-    off();
+    analogWrite(pin, 0);
 }
 
-void RelayActuator::on() {
-    digitalWrite(pin, HIGH);
-    state = true;
+void PwmActuator::setSpeed(uint8_t speed) {
+    // Saturate to valid range
+    if (speed > ACTUATOR_MAX) speed = ACTUATOR_MAX;
+    
+    currentSpeed = speed;
+    currentPwm = map(speed, ACTUATOR_MIN, ACTUATOR_MAX, 0, PWM_MAX);
+    analogWrite(pin, currentPwm);
 }
 
-void RelayActuator::off() {
-    digitalWrite(pin, LOW);
-    state = false;
+uint8_t PwmActuator::getSpeed() {
+    return currentSpeed;
 }
 
-bool RelayActuator::isOn() {
-    return state;
+uint8_t PwmActuator::getPwm() {
+    return currentPwm;
 }

@@ -6,42 +6,49 @@
 #include <lcd/LcdStdioManager.h>
 #include <keypad/KeypadStdioManager.h>
 #include "actuator.h"
+#include <serialio/serialio.h>
 #include "tasks.h"
 
-// LCD and Keypad configuration
+// LCD configuration
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
+// Keypad configuration
 byte rowPins[4] = {9, 8, 7, 6};
 byte colPins[4] = {5, 4, 3, 2};
 
 char keys[4][4] = {
-  {'0','1','3','A'},
-  {'4','5','6','B'},
-  {'7','8','9','C'},
-  {'*','0','#','D'}
+    {'1', '2', '3', 'A'},
+    {'4', '5', '6', 'B'},
+    {'7', '8', '9', 'C'},
+    {'*', '0', '#', 'D'}
 };
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, 4, 4);
 
-// Global actuator instance
-RelayActuator relay(10);
+// Global actuator instance (PWM on pin 10)
+PwmActuator actuator(10);
 
 void setup() {
     Serial.begin(9600);
-    relay.begin();
+    actuator.begin();
 
     lcd.init();
     lcd.backlight();
 
-    // static prevents object destruction after setup ends
+    // Static prevents object destruction after setup ends
     static LcdStdioManager lcdManager;
     lcdManager.setup(&lcd);
     KeypadStdioManager::setup(&keypad);
 
+    redirectSerialToStdio(false, false, true);
+
     // Create FreeRTOS tasks
-    xTaskCreate(TaskRead, "ReadTask", 128, NULL, 1, NULL);
-    xTaskCreate(TaskActuatorConditioning, "CondTask", 128, NULL, 1, NULL);
-    xTaskCreate(TaskWrite, "WriteTask", 128, &relay, 1, NULL);
+    xTaskCreate(TaskRead,    "ReadTask",    200, NULL,         1, NULL);
+    xTaskCreate(TaskFilter,  "FilterTask",  200, &actuator,    2, NULL);
+    xTaskCreate(TaskDisplay, "DisplayTask", 200, NULL,         1, NULL);
+
+    fprintf(stderr, "Setup complete. Starting scheduler...\n");
+    vTaskStartScheduler();
 }
 
-void loop() { }
+void loop() {}

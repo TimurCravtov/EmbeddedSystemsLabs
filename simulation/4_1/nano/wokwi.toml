@@ -1,3 +1,0 @@
-[wokwi]
-version = 1
-firmware = '../../../src/labs/lab4_1/.pio/build/nano/firmware.hex'
