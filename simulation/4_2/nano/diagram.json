@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "author": "Timur",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-nano", "id": "nano", "top": 254.4, "left": -211.7, "attrs": {} },
+    { "type": "wokwi-servo", "id": "servo", "top": 132.4, "left": 518.4, "attrs": {} },
+    {
+      "type": "wokwi-membrane-keypad",
+      "id": "keypad",
+      "top": -251.6,
+      "left": -263.2,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": 409.6,
+      "left": 159.2,
+      "attrs": { "pins": "i2c" }
+    }
+  ],
+  "connections": [
+    [ "nano:GND.2", "servo:GND", "black", [ "v-100", "h200" ] ],
+    [ "nano:5V", "servo:VCC", "red", [ "v-80", "h200" ] ],
+    [ "nano:D11", "servo:PWM", "orange", [ "v-60", "h200" ] ],
+    [ "nano:GND.3", "lcd:GND", "black", [ "v20", "h400" ] ],
+    [ "nano:5V.2", "lcd:VCC", "red", [ "v40", "h400" ] ],
+    [ "nano:A4", "lcd:SDA", "blue", [ "v-30", "h400" ] ],
+    [ "nano:A5", "lcd:SCL", "purple", [ "v-50", "h400" ] ],
+    [ "keypad:R1", "nano:D9", "orange", [ "h-200" ] ],
+    [ "keypad:R2", "nano:D8", "orange", [ "h-200" ] ],
+    [ "keypad:R3", "nano:D7", "orange", [ "h-200" ] ],
+    [ "keypad:R4", "nano:D6", "orange", [ "h-200" ] ],
+    [ "keypad:C1", "nano:D5", "blue", [ "h-200" ] ],
+    [ "keypad:C2", "nano:D4", "blue", [ "h-200" ] ],
+    [ "keypad:C3", "nano:D3", "blue", [ "h-200" ] ],
+    [ "keypad:C4", "nano:D2", "blue", [ "h-200" ] ],
+    [ "lcd1:GND", "nano:GND.1", "black", [ "h0" ] ],
+    [ "lcd1:VCC", "nano:5V", "red", [ "h0" ] ],
+    [ "lcd1:SDA", "nano:A4", "green", [ "h0" ] ],
+    [ "lcd1:SCL", "nano:A5", "green", [ "h0" ] ],
+    [ "keypad:R1", "nano:9", "green", [ "v0" ] ],
+    [ "keypad:R2", "nano:8", "green", [ "v0" ] ],
+    [ "keypad:R3", "nano:7", "green", [ "v0" ] ],
+    [ "keypad:R4", "nano:6", "green", [ "v0" ] ],
+    [ "keypad:C1", "nano:5", "green", [ "v0" ] ],
+    [ "keypad:C2", "nano:4", "green", [ "v0" ] ],
+    [ "keypad:C3", "nano:3", "green", [ "v0" ] ],
+    [ "keypad:C4", "nano:2", "green", [ "v0" ] ],
+    [ "servo:PWM", "nano:11", "green", [ "h0" ] ]
+  ],
+  "dependencies": {}
+}
