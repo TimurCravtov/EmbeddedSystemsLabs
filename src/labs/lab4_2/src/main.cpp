@@ -38,10 +38,10 @@ void setup() {
 
     // STDIO: LCD output, Keypad input
     static LcdStdioManager lcdManager;
-    lcdManager.setup(&lcd);
-    KeypadStdioManager::setup(&keypad);
+    // lcdManager.setup(&lcd);
+    // KeypadStdioManager::setup(&keypad);
 
-    // redirectSerialToStdio(false, false, true);
+    redirectSerialToStdio(true, true, true);
 
     // FreeRTOS tasks (stack sizes tuned for Nano - 2KB RAM)
     xTaskCreate(TaskRead,    "Read",   100, NULL,      1, NULL);

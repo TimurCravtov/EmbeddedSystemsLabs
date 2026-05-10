@@ -47,19 +47,20 @@ static void sortArray(uint8_t* arr, uint8_t size) {
 }
 
 // Task 1: Read commands from keypad
-void TaskRead(void* pvParameters) {
+void 
+TaskRead(void* pvParameters) {
     (void)pvParameters;
     char c;
     
     while (true) {
         c = 0;
-        if (scanf("%c", &c) > 0 && c > '\r') {
+        if (scanf("%c", &c) > 0 && c > 0) {
             if (c >= '0' && c <= '9') {
                 if (inputIndex < 3) {
                     inputBuffer[inputIndex++] = c;
                     inputBuffer[inputIndex] = '\0';
                 }
-            } else if (c == '#' || c == 'A') {
+            } else if (c == '#' || c == 'A' || c == 'a' || c == '\n' || c == '\r') {
                 if (inputIndex > 0) {
                     uint8_t value = (uint8_t)atoi(inputBuffer);
                     if (value > 100) { value = 100; limitReached = true; }
@@ -69,7 +70,7 @@ void TaskRead(void* pvParameters) {
                     inputIndex = 0;
                     inputBuffer[0] = '\0';
                 }
-            } else if (c == '*' || c == 'B') {
+            } else if (c == '*' || c == 'B' || c == 'b') {
                 inputIndex = 0;
                 inputBuffer[0] = '\0';
             } else if (c == 'C') {

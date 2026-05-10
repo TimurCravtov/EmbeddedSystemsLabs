@@ -137,48 +137,44 @@ void TaskDisplay(void* pvParameters) {
     (void)pvParameters;
 
     while (true) {
-        uint16_t distanceCmLocal;
-        uint16_t thresholdCmLocal;
-        bool gateOpenLocal;
-        bool sensorValidLocal;
+        uint16_t dLocal, tLocal;
+        bool openLocal, validLocal;
         char keyLocal;
-        uint8_t inputLenLocal;
-        char input0;
-        char input1;
-        char input2;
+        char localInput[4] = "---";
 
+        // capture all shared state in one critical section
         taskENTER_CRITICAL();
-        distanceCmLocal = sysState.distanceCm;
-        thresholdCmLocal = sysState.thresholdCm;
-        gateOpenLocal = sysState.isOpen;
-        sensorValidLocal = sysState.isSensorValid;
+        dLocal = sysState.distanceCm;
+        tLocal = sysState.thresholdCm;
+        openLocal = sysState.isOpen;
+        validLocal = sysState.isSensorValid;
         keyLocal = sysState.key;
-        inputLenLocal = inputIndex;
-        input0 = inputBuffer[0];
-        input1 = inputBuffer[1];
-        input2 = inputBuffer[2];
+        
+        if (inputIndex > 0) {
+            strncpy(localInput, inputBuffer, 3);
+            localInput[3] = '\0';
+        }
         taskEXIT_CRITICAL();
 
+        // sanitize key display
         if (keyLocal < 32 || keyLocal > 126) {
             keyLocal = '-';
         }
 
-        char localInput[4];
-        localInput[0] = input0;
-        localInput[1] = input1;
-        localInput[2] = input2;
-        localInput[3] = '\0';
+        const char gateChar = openLocal ? 'O' : 'C';
 
-        const char* shownInput = (inputLenLocal > 0) ? localInput : "---";
-        const char gateChar = gateOpenLocal ? 'O' : 'C';
-
-        if (sensorValidLocal) {
-            printf_P(STR_LINE0, distanceCmLocal, thresholdCmLocal, gateChar);
+        // print line 0: distance and threshold
+        if (validLocal) {
+            printf_P(STR_LINE0, dLocal, tLocal, gateChar);
         } else {
-            printf_P(STR_LINE0_INVALID, thresholdCmLocal, gateChar);
+            printf_P(STR_LINE0_INVALID, tLocal, gateChar);
         }
-        printf_P(STR_LINE1, keyLocal, shownInput);
-        printf_P(PSTR("\n"));
+
+        // print line 1: key and buffer
+        printf_P(STR_LINE1, keyLocal, localInput);
+        
+        // force newline to flush buffer clearly
+        printf_P(PSTR("\n\n"));
 
         vTaskDelay(pdMS_TO_TICKS(TASK_DISPLAY_PERIOD));
     }
