@@ -6,11 +6,19 @@
 #include <string.h>
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PROGMEM strings — padded to 16 chars to fully overwrite LCD leftovers.
+// PROGMEM strings — saves SRAM on AVR.
 // ─────────────────────────────────────────────────────────────────────────────
 static const char STR_LINE0[]         PROGMEM = "\rD:%3u T:%3u %c   \n";
 static const char STR_LINE0_INVALID[] PROGMEM = "\rD:--- T:%3u %c   \n";
 static const char STR_LINE1[]         PROGMEM = "\rK:%c In:%-3s      ";
+
+// Plotter format strings in PROGMEM.
+// Integer-only specifiers (%u / %d) keep the linker away from float printf.
+static const char PLOT_DIST[]     PROGMEM = ">pos/dist:%d.%u\n";
+static const char PLOT_SETPOINT[] PROGMEM = ">pos/setpoint:%u\n";
+static const char PLOT_ERROR[]    PROGMEM = ">pid/error:%d.%u\n";
+static const char PLOT_OUTPUT[]   PROGMEM = ">pid/output:%d\n";
+static const char PLOT_VALID[]    PROGMEM = ">status/valid:%u\n";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared state
@@ -27,7 +35,7 @@ volatile SystemState sysState           = {0, MIN_DISTANCE_DEFAULT_CM, 0, 0,
                                             SERVO_POS_NEUTRAL, false, false, '-'};
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Keypad input buffer (max 3 digits, value ≤ 400)
+// Keypad input buffer (max 3 digits, value <= 400)
 // ─────────────────────────────────────────────────────────────────────────────
 static char    inputBuffer[4] = {0};
 static uint8_t inputIndex     = 0;
@@ -71,13 +79,44 @@ static inline int16_t roundToInt(float value) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Integer fixed-point EMA
+//
+// Values are stored x10 (tenths) so one decimal place prints as integers.
+// Alpha = 1 / (1 << EMA_SHIFT):
+//   shift 2 -> alpha ~0.25  (faster, less smooth)
+//   shift 3 -> alpha ~0.125 (default, moderate)
+//   shift 4 -> alpha ~0.063 (very smooth, more lag)
+// ─────────────────────────────────────────────────────────────────────────────
+#define EMA_SHIFT 3
+
+static inline int16_t emaStep(int16_t smoothed, int16_t incoming) {
+    return (int16_t)(smoothed + ((incoming - smoothed) >> EMA_SHIFT));
+}
+
+// Print a x10 fixed-point value with one decimal place using PROGMEM format.
+// E.g. 173 -> "17.3",  -23 -> "-2.3"
+static void printFixed(const char* fmt_P, int16_t val_x10) {
+    int16_t intPart;
+    uint8_t fracPart;
+    if (val_x10 < 0) {
+        int16_t abs_x10 = (int16_t)(-val_x10);
+        intPart  = (int16_t)(-(abs_x10 / 10));
+        fracPart = (uint8_t) ( abs_x10 % 10u);
+    } else {
+        intPart  = (int16_t)(val_x10 / 10);
+        fracPart = (uint8_t) (val_x10 % 10u);
+    }
+    printf_P(fmt_P, (int)intPart, (unsigned)fracPart);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PID state
 // ─────────────────────────────────────────────────────────────────────────────
 static float pidIntegral = 0.0f;
 static float lastError   = 0.0f;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TaskRead — receives keypad / serial commands
+// TaskRead
 // ─────────────────────────────────────────────────────────────────────────────
 void TaskRead(void* pvParameters) {
     (void)pvParameters;
@@ -94,7 +133,7 @@ void TaskRead(void* pvParameters) {
                 }
             } else if (c == '#' || c == 'A') {
                 if (inputIndex > 0) {
-                    minDistanceCm       = clampThreshold(parseInputBuffer());
+                    minDistanceCm        = clampThreshold(parseInputBuffer());
                     sysState.thresholdCm = minDistanceCm;
                     clearInputBuffer();
                 }
@@ -105,7 +144,6 @@ void TaskRead(void* pvParameters) {
                 sysState.thresholdCm = minDistanceCm;
                 clearInputBuffer();
             } else if (c == 'D') {
-                // Quick +5 cm step
                 minDistanceCm        = clampThreshold((uint16_t)(minDistanceCm + 5u));
                 sysState.thresholdCm = minDistanceCm;
                 clearInputBuffer();
@@ -135,13 +173,13 @@ void TaskFilter(void* pvParameters) {
         const uint16_t distanceCm = valid ? (uint16_t)(rawDistance + 0.5f) : 0u;
 
         if (valid) {
-            const float setpoint = (float)minDistanceCm;
+            const float setpoint   = (float)minDistanceCm;
             float error = setpoint - (float)distanceCm;
             if (PID_INVERT_OUTPUT) error = -error;
 
-            const float dt = (float)TASK_CONTROL_PERIOD / 1000.0f;
-            pidIntegral     = clampFloat(pidIntegral + (error * dt),
-                                         PID_INTEGRAL_MIN, PID_INTEGRAL_MAX);
+            const float dt  = (float)TASK_CONTROL_PERIOD / 1000.0f;
+            pidIntegral      = clampFloat(pidIntegral + (error * dt),
+                                          PID_INTEGRAL_MIN, PID_INTEGRAL_MAX);
             const float derivative = (error - lastError) / dt;
             const float control    = (PID_KP * error)
                                    + (PID_KI * pidIntegral)
@@ -151,9 +189,9 @@ void TaskFilter(void* pvParameters) {
             command = clampInt16(command, SERVO_POS_MIN, SERVO_POS_MAX);
             actuator->setPosition((uint8_t)command);
 
-            gateOpen  = (command >= SERVO_POS_NEUTRAL);
-            lastError = error;
-            pidErrorCm  = roundToInt(error);
+            gateOpen     = (command >= SERVO_POS_NEUTRAL);
+            lastError    = error;
+            pidErrorCm   = roundToInt(error);
             pidOutputPos = (uint8_t)command;
         } else {
             actuator->setPosition(SERVO_POS_NEUTRAL);
@@ -164,17 +202,16 @@ void TaskFilter(void* pvParameters) {
             pidOutputPos = SERVO_POS_NEUTRAL;
         }
 
-        measuredDistanceCm = distanceCm;
-        sensorValid        = valid;
-        servoAngle         = actuator->getAngle();
+        measuredDistanceCm  = distanceCm;
+        sensorValid         = valid;
+        servoAngle          = actuator->getAngle();
 
-        // Update shared snapshot atomically
-        sysState.distanceCm   = measuredDistanceCm;
-        sysState.thresholdCm  = minDistanceCm;
-        sysState.angle        = servoAngle;
-        sysState.errorCm      = pidErrorCm;
-        sysState.outputPos    = pidOutputPos;
-        sysState.isOpen       = gateOpen;
+        sysState.distanceCm    = measuredDistanceCm;
+        sysState.thresholdCm   = minDistanceCm;
+        sysState.angle         = servoAngle;
+        sysState.errorCm       = pidErrorCm;
+        sysState.outputPos     = pidOutputPos;
+        sysState.isOpen        = gateOpen;
         sysState.isSensorValid = sensorValid;
 
         vTaskDelay(pdMS_TO_TICKS(TASK_CONTROL_PERIOD));
@@ -182,38 +219,32 @@ void TaskFilter(void* pvParameters) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TaskDisplay — LCD output  OR  Teleplot serial plotter
+// TaskDisplay — LCD text  OR  Teleplot serial plotter
 //
 // Teleplot channel layout
 // ───────────────────────
-//   pos/dist      — EMA-smoothed measured distance (cm)
-//   pos/setpoint  — target distance (cm)          ← same axis as dist
-//   pid/error     — EMA-smoothed PID error (cm)
-//   pid/output    — EMA-smoothed servo offset from neutral (servo units)
+//   pos/dist      — EMA-smoothed distance (cm, 1 d.p.)   ─┐ same graph
+//   pos/setpoint  — target distance (cm, integer)          ┘
+//   pid/error     — EMA-smoothed PID error (cm, 1 d.p.)
+//   pid/output    — servo offset from neutral (integer servo units)
 //   status/valid  — 1 = sensor OK, 0 = sensor lost
 //
-// Grouping trick: channels that share a "/" prefix are plotted on the
-// same Teleplot graph automatically, so dist vs. setpoint is immediately
-// visible without any manual axis-linking.
-//
-// EMA smoothing
-// ─────────────
-//   smoothed = ALPHA * new + (1 - ALPHA) * smoothed
-//   ALPHA = 0.20 → moderate smoothing, ~5-sample lag.
-//   Increase toward 0.40 for a tighter/faster response.
-//   Decrease toward 0.08 for a glassier trace.
+// Memory decisions
+// ────────────────
+//   • Format strings in PROGMEM  → saves 5 x ~20 bytes of SRAM.
+//   • Only %d / %u specifiers    → linker uses small integer printf,
+//                                   NOT the large float printf variant.
+//   • EMA in fixed-point int16_t → no floats in this task whatsoever.
+//   • EMA state: 3 x int16_t + 1 bool = 7 bytes total (vs 3 x float = 12).
 // ─────────────────────────────────────────────────────────────────────────────
 void TaskDisplay(void* pvParameters) {
     (void)pvParameters;
 
-    // ── EMA filter state (persists across loop iterations) ──────────────────
-    static float smoothDist  = 0.0f;
-    static float smoothErr   = 0.0f;
-    static float smoothOut   = 0.0f;
-    static bool  smoothReady = false;
-
-    // Tune this to taste (see notes above)
-    constexpr float ALPHA = 0.20f;
+    // EMA state — x10 scale, int16_t (max 400 cm -> 4000, fits fine).
+    static int16_t smoothDist_x10 = 0;
+    static int16_t smoothErr_x10  = 0;
+    static int16_t smoothOut      = 0;   // servo offset; no decimal needed
+    static bool    smoothReady    = false;
 
     while (true) {
         // ── Capture shared state in one critical section ─────────────────────
@@ -238,7 +269,6 @@ void TaskDisplay(void* pvParameters) {
         }
         taskEXIT_CRITICAL();
 
-        // ── Sanitise key for display ─────────────────────────────────────────
         if (keyLocal < 32 || keyLocal > 126) keyLocal = '-';
 
         // ════════════════════════════════════════════════════════════════════
@@ -246,43 +276,34 @@ void TaskDisplay(void* pvParameters) {
         // ════════════════════════════════════════════════════════════════════
         if (ENABLE_PLOTTER) {
             if (validLocal) {
-                const float fDist = (float)dLocal;
-                const float fErr  = (float)errLocal;
-                // Centre servo output around neutral so the trace is 0-based
-                const float fOut  = (float)((int16_t)outLocal
-                                          - (int16_t)SERVO_POS_NEUTRAL);
+                const int16_t dist_x10 = (int16_t)(dLocal * 10u);
+                const int16_t err_x10  = (int16_t)(errLocal * 10);
+                const int16_t out      = (int16_t)((int16_t)outLocal
+                                                 - (int16_t)SERVO_POS_NEUTRAL);
 
-                // Seed the smoother on first valid reading (avoids a big
-                // initial spike from 0 → real value)
                 if (!smoothReady) {
-                    smoothDist  = fDist;
-                    smoothErr   = fErr;
-                    smoothOut   = fOut;
-                    smoothReady = true;
+                    // Seed on first valid reading — no startup spike
+                    smoothDist_x10 = dist_x10;
+                    smoothErr_x10  = err_x10;
+                    smoothOut      = out;
+                    smoothReady    = true;
                 } else {
-                    smoothDist = ALPHA * fDist + (1.0f - ALPHA) * smoothDist;
-                    smoothErr  = ALPHA * fErr  + (1.0f - ALPHA) * smoothErr;
-                    smoothOut  = ALPHA * fOut  + (1.0f - ALPHA) * smoothOut;
+                    smoothDist_x10 = emaStep(smoothDist_x10, dist_x10);
+                    smoothErr_x10  = emaStep(smoothErr_x10,  err_x10);
+                    smoothOut      = emaStep(smoothOut,       out);
                 }
 
-                printf(">pos/dist:%.1f\n"
-                       ">pos/setpoint:%u\n"
-                       ">pid/error:%.1f\n"
-                       ">pid/output:%.1f\n"
-                       ">status/valid:1\n",
-                       smoothDist,
-                       tLocal,
-                       smoothErr,
-                       smoothOut);
-            } else {
-                // Sensor lost: reset smoother so next valid reading seeds
-                // cleanly; keep setpoint visible so the operator can still
-                // see the target, and flag the dropout.
-                smoothReady = false;
+                printFixed(PLOT_DIST,  smoothDist_x10);
+                printf_P(PLOT_SETPOINT, tLocal);
+                printFixed(PLOT_ERROR, smoothErr_x10);
+                printf_P(PLOT_OUTPUT,  (int)smoothOut);
+                printf_P(PLOT_VALID,   1u);
 
-                printf(">pos/setpoint:%u\n"
-                       ">status/valid:0\n",
-                       tLocal);
+            } else {
+                // Dropout: reset smoother, keep setpoint visible, flag it
+                smoothReady = false;
+                printf_P(PLOT_SETPOINT, tLocal);
+                printf_P(PLOT_VALID,    0u);
             }
 
             vTaskDelay(pdMS_TO_TICKS(TASK_PLOT_PERIOD));
@@ -290,7 +311,7 @@ void TaskDisplay(void* pvParameters) {
         }
 
         // ════════════════════════════════════════════════════════════════════
-        //  LCD / SERIAL TEXT DISPLAY PATH
+        //  LCD / SERIAL TEXT DISPLAY PATH  (unchanged from original)
         // ════════════════════════════════════════════════════════════════════
         char dirChar = '=';
         if (angleLocal > (uint8_t)(SERVO_ANGLE_NEUTRAL + SERVO_ANGLE_DEADBAND)) {

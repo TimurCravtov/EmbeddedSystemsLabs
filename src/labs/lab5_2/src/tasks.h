@@ -12,7 +12,7 @@ constexpr uint32_t TASK_DISPLAY_PERIOD = 250;
 constexpr uint32_t TASK_PLOT_PERIOD = 80;
 
 // Distance limits (cm)
-constexpr uint16_t MIN_DISTANCE_DEFAULT_CM = 20;
+constexpr uint16_t MIN_DISTANCE_DEFAULT_CM = 15;
 constexpr uint16_t MIN_DISTANCE_MIN_CM = 2;
 constexpr uint16_t MIN_DISTANCE_MAX_CM = 400;
 
