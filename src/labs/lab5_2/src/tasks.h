@@ -30,6 +30,8 @@ constexpr uint8_t SERVO_ANGLE_DEADBAND = 5;
 
 // Keep a small hysteresis to avoid gate chatter near threshold
 constexpr uint8_t GATE_HYSTERESIS_CM = 2;
+// Minimum time to keep the gate open after activation
+constexpr uint16_t GATE_MIN_OPEN_MS = 600;
 
 // Serial Plotter output toggle (prints only plot lines when true)
 constexpr bool ENABLE_PLOTTER = true;

@@ -149,14 +149,35 @@ void TaskFilter(void* pvParameters) {
     gateOpen   = false;
     servoAngle = actuator->getAngle();
 
+    static bool controlActive   = false;
+    static uint32_t lastOpenMs  = 0;
+
     while (true) {
         const float rawDistance = sensor->readRaw();
         const bool  valid       = (rawDistance > 0.5f) &&
                                   (rawDistance <= (float)MIN_DISTANCE_MAX_CM);
         const uint16_t distanceCm = valid ? (uint16_t)(rawDistance + 0.5f) : 0u;
 
-        // calculates pid only when object is within threshold
-        if (valid && distanceCm <= minDistanceCm) {
+        const uint32_t nowMs = millis();
+        const bool inRange = valid && (distanceCm <= minDistanceCm);
+        const bool aboveClose = valid &&
+            (distanceCm > (uint16_t)(minDistanceCm + GATE_HYSTERESIS_CM));
+        const bool holdOpen = controlActive &&
+            ((uint32_t)(nowMs - lastOpenMs) < GATE_MIN_OPEN_MS);
+
+        if (inRange) {
+            if (!controlActive) {
+                controlActive = true;
+                lastOpenMs = nowMs;
+            }
+        } else if (!valid || aboveClose) {
+            if (controlActive && (uint32_t)(nowMs - lastOpenMs) >= GATE_MIN_OPEN_MS) {
+                controlActive = false;
+            }
+        }
+
+        // runs PID only while active and in range; holds last output otherwise
+        if (controlActive && inRange) {
             const float setpoint = (float)minDistanceCm;
             float error = setpoint - (float)distanceCm;
 
@@ -185,12 +206,24 @@ void TaskFilter(void* pvParameters) {
             // positive control opens toward SERVO_POS_MAX
             int16_t command = (int16_t)SERVO_POS_MIN + roundToInt(control);
             command = clampInt16(command, SERVO_POS_MIN, SERVO_POS_MAX);
+            if (holdOpen && command < SERVO_POS_OPEN) {
+                command = SERVO_POS_OPEN;
+            }
             actuator->setPosition((uint8_t)command);
 
             gateOpen     = (command > SERVO_POS_MIN);
             lastError    = error;
             pidErrorCm   = roundToInt(error);
             pidOutputPos = (uint8_t)command;
+        } else if (controlActive) {
+            if (holdOpen) {
+                actuator->setPosition(SERVO_POS_OPEN);
+                gateOpen = true;
+                pidOutputPos = SERVO_POS_OPEN;
+            } else {
+                actuator->setPosition(pidOutputPos);
+                gateOpen = (pidOutputPos > SERVO_POS_MIN);
+            }
         } else {
             // object out of range - drive fully closed, clear pid memory
             actuator->setPosition(SERVO_POS_MIN);
